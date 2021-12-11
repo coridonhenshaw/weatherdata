@@ -1,4 +1,5 @@
 sources.txt
 *.csv
 *.zip
+*.kml
 weatherdata

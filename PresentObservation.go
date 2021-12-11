@@ -2,7 +2,6 @@ package main
 
 import (
 	"fmt"
-	"log"
 	"os"
 	"strings"
 	"time"
@@ -10,24 +9,16 @@ import (
 	"github.com/olekukonko/tablewriter"
 )
 
-func GetOneObservation(Station string, ObsTime time.Time) error {
+func PresentObservation(Stations string, ObsTime time.Time) error {
 
-	UTCLoc, err := time.LoadLocation("UTC")
-	if err != nil {
-		log.Fatal(`Failed to load location "UTC"`)
-	}
-
-	LocalLoc, err := time.LoadLocation("Local")
-	if err != nil {
-		log.Fatal(`Failed to load location "Local"`)
-	}
+	var GOE GetObservationEngine
 
 	ST := ObsTime.In(UTCLoc).Format("2006-01-02 15 MST") + " (" + ObsTime.In(LocalLoc).Format("2006-01-02 15 MST") + ")"
 
-	fmt.Printf("\nReports at %s from %s:\n", ST, Station)
+	fmt.Printf("\nReports at %s from %s:\n\n", ST, Stations)
 
 	table := tablewriter.NewWriter(os.Stdout)
-	table.SetHeader([]string{"Station\nIdentifier", "Min\n°C", "Avg\n°C", "Max\n°C", "Humidity\n%", "Pressure\nhPA", "Wet Bulb\n°C", "Dew Point\n°C", "Precipitation\nmm/hr", "Wind\nkm/h", "Gusts\nkm/h", "Wind Dir\n°"})
+	table.SetHeader([]string{"Station\nName", "Min\n°C", "Avg\n°C", "Max\n°C", "RH\n%", "Barr\nhPA", "Wet Bulb\n°C", "Dew Point\n°C", "Perceived\n°C", "Precip\nmm/hr", "Wind\nkm/h", "Gusts\nkm/h", "W Dir\n°"})
 	table.SetBorder(false)
 	table.SetAutoWrapText(false)
 	table.SetAutoFormatHeaders(true)
@@ -41,36 +32,42 @@ func GetOneObservation(Station string, ObsTime time.Time) error {
 	table.SetHeaderAlignment(tablewriter.ALIGN_LEFT)
 	table.SetAlignment(tablewriter.ALIGN_LEFT)
 
-	StationArray := strings.Fields(Station)
+	StationArray := strings.Fields(Stations)
 
 	for _, Station := range StationArray {
 		//		fmt.Println(Station)
 		//		continue
 
-		q, err := MakeBaseURL(Station)
+		// q, err := MakeBaseURL(Station)
+		// if err != nil {
+		// 	fmt.Println(err)
+		// 	os.Exit(1)
+		// }
+		//
+		// q, err = InjectURLDateTime(q, ObsTime.In(UTCLoc))
+		// if err != nil {
+		// 	fmt.Println(err)
+		// 	os.Exit(1)
+		// }
+		//
+		// // fmt.Println(q)
+		// // os.Exit(0)
+		//
+		// s, err := HTTPSGet(q)
+		// if err != nil {
+		// 	fmt.Println("HTTP Error", err, "acquiring", q)
+		// 	continue
+		// }
+		//
+		// Observation, _ := ParseObservation(s)
+
+		Observation, err := GOE.Get(Station, ObsTime)
 		if err != nil {
-			fmt.Println(err)
-			os.Exit(1)
+			fmt.Println("error", err, "acquiring observation from", Station)
+			continue
 		}
 
-		q, err = InjectURLDateTime(q, ObsTime.In(UTCLoc))
-		if err != nil {
-			fmt.Println(err)
-			os.Exit(1)
-		}
-
-		// fmt.Println(q)
-		// os.Exit(0)
-
-		s, err := HTTPSGet(q)
-		if err != nil {
-			fmt.Println("HTTP Error", err)
-			os.Exit(1)
-		}
-
-		Observation, _ := ParseObservation(s)
-
-		Row := []string{Observation.Station, Observation.MinTemperature, Observation.Temperature, Observation.MaxTemperature, Observation.Humidity, Observation.Pressure, Observation.WetBulbTemperature, Observation.DewPoint, Observation.Precipitation, Observation.AverageWindSpeed, Observation.PeakWindSpeed, Observation.AverageWindDirection}
+		Row := []string{Observation.Station, Observation.MinTemperature, Observation.Temperature, Observation.MaxTemperature, Observation.Humidity, Observation.Pressure, Observation.WetBulbTemperature, Observation.DewPoint, Observation.Windchill + Observation.Humidex, Observation.Precipitation, Observation.AverageWindSpeed, Observation.PeakWindSpeed, Observation.AverageWindDirection}
 		table.Append(Row)
 
 		// t1, err := time.Parse(time.RFC3339, Observation.Timestamp)
@@ -96,7 +93,6 @@ func GetOneObservation(Station string, ObsTime time.Time) error {
 
 	}
 
-	fmt.Println()
 	table.Render()
 	fmt.Println()
 

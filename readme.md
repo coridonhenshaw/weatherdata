@@ -6,66 +6,63 @@ The intended use case is to access weather information that Environment Canada d
 
 Weatherdata is also capable of totalizing observation data over multiple hours (limited only by data retention on the SWOB system) to report on cumulative precipitation and the ranges of observed values over time.
 
-Weatherdata is intended for casual, interactive, use. Use of Weatherdata as a backend for large-scale scraping or to implement public-access services is prohibited. Tools for these use cases should use Environment Canada's HPFX server or AMQP push feeds.
+Weatherdata is intended for casual, interactive, use. Use of Weatherdata as a backend for large-scale scraping or to implement public-access services is prohibited. Tools for these use cases should connect with Environment Canada's HPFX server or AMQP push feeds.
 
 ## Example
 ```
-> weatherdata -s CWAS-AUTO --total --starttime "2021-11-25 00 PST"
+> weatherdata -s CYEG-MAN --total --hours 24       
 
-Totalizing station CWAS-AUTO from 2021-11-25 08 UTC (2021-11-25 00 PST) to 2021-11-26 21 UTC (2021-11-26 13 PST) (37 hours):
+Totalizing station CYEG-MAN from 2021-12-04 04 UTC (2021-12-03 20 PST) to 2021-12-05 04 UTC (2021-12-04 20 PST) (24 hours):
 
-  TIME                MIN   AVG   MAX   HUM   PRESSURE   WET BULB   DEW POINT   PRECIP   WIND   GUSTS  
-                      °C    °C    °C    %     HPA        °C         °C          MM/HR    KM/H   KM/H   
-  2021-11-25 01 PST   5.7   5.7   6.3   92    1024.3     5.2        4.5         0.4      16.6   25.8   
-  2021-11-25 02 PST   5.7   5.8   6.1   93    1023.8     5.3        4.8         1        16.6   24.1   
-  2021-11-25 03 PST   5.4   5.7   5.8   92    1023.6     5.2        4.6         1.2      14.9   23.4   
-  2021-11-25 04 PST   4.9   5.0   5.7   92    1022.6     4.5        3.8         2.4      17.7   27.2   
-  2021-11-25 05 PST   4.3   4.5   5.1   93    1022.0     4.1        3.5         2        14.2   23.3   
-  2021-11-25 06 PST   4.5   4.8   4.9   91    1021.4     4.1        3.3         1        16.3   23.5   
-  2021-11-25 07 PST   4.6   4.7   4.9   94    1020.5     4.3        3.8         1.6      16.8   24.2   
-  2021-11-25 08 PST   4.5   4.9   4.9   95    1020.1     4.5        4.1         2        19.0   25.3   
-  2021-11-25 09 PST   4.7   4.8   5.1   94    1019.9     4.4        3.9         4.2      19.1   24.9   
-  2021-11-25 10 PST   4.7   4.9   5.3   92    1020.2     4.4        3.8         3.8      20.5   25.8   
-  2021-11-25 11 PST   4.8   5.0   5.2   94    1019.5     4.6        4.1         3.2      20.1   27.9   
-  2021-11-25 12 PST   4.9   5.3   5.4   95    1019.2     4.9        4.5         2.8      18.6   26.0   
-  2021-11-25 13 PST   5.0   5.3   5.4   94    1018.6     4.9        4.4         3.2      24.2   33.2   
-  2021-11-25 14 PST   5.2   5.3   5.8   94    1017.8     4.9        4.5         2.2      21.0   35.8   
-  2021-11-25 15 PST   5.2   5.6   5.9   96    1017.8     5.2        4.9         2.8      17.3   25.0   
-  2021-11-25 16 PST   5.2   5.3   5.8   96    1017.7     5.0        4.7         1.8      19.8   27.6   
-  2021-11-25 17 PST   5.3   5.5   5.8   95    1018.0     5.2        4.8         1.8      22.5   29.9   
-  2021-11-25 18 PST   5.4   5.7   5.8   95    1018.2     5.3        4.9         1.2      24.5   32.3   
-  2021-11-25 19 PST   5.6   5.7   6.1   93    1017.9     5.2        4.6         0.4      26.6   37.7   
-  2021-11-25 20 PST   5.7   5.9   6.1   94    1017.6     5.4        4.9         0.8      17.0   26.5   
-  2021-11-25 21 PST   5.7   5.8   6.1   95    1017.7     5.4        5           0.2      14.7   23.1   
-  2021-11-25 22 PST   5.8   6.0   6.2   96    1017.4     5.7        5.4         0.6      7.7    13.3   
-  2021-11-25 23 PST   5.8   6.1   6.2   96    1016.9     5.9        5.6         1        10.5   16.1   
-  2021-11-26 00 PST   5.9   6.0   6.2   97    1016.9     5.8        5.6         3        12.3   18.2   
-  2021-11-26 01 PST   5.8   6.1   6.2   97    1017.2     5.9        5.7         3.4      20.7   26.7   
-  2021-11-26 02 PST   5.8   6.6   6.6   97    1017.1     6.3        6.1         1.6      17.4   25.3   
-  2021-11-26 03 PST   6.0   6.4   6.5   97    1017.2     6.2        5.9         0.4      8.3    17.5   
-  2021-11-26 04 PST   6.4   6.6   6.7   96    1017.1     6.4        6.1         0        4.0    10.9   
-  2021-11-26 05 PST   6.6   6.6   6.6   96    1017.5     6.4        6.1         0        1.8    5.1    
-  2021-11-26 06 PST   6.3   6.6   6.6   97    1017.8     6.4        6.1         0        7.1    12.7   
-  2021-11-26 07 PST   6.6   6.7   6.7   97    1018.4     6.4        6.2         0        2.0    7.3    
-  2021-11-26 08 PST   6.5   6.7   6.7   97    1018.8     6.4        6.2         0        2.7    7.9    
-  2021-11-26 09 PST   6.6   6.8   6.8   97    1019.8     6.5        6.3         0        2.0    6.5    
-  2021-11-26 10 PST   6.7   8.3   8.3   95    1020.4     7.9        7.6         0        2.2    6.6    
-  2021-11-26 11 PST   7.5   7.6   8.6   94    1021.1     7.1        6.6         0        2.1    5.9    
-  2021-11-26 12 PST   7.6   8.3   9.8   92    1021.2     7.6        7           0        1.7    6.0    
-  2021-11-26 13 PST   8.0   8.4   9.6   91    1021.4     7.7        7           0        3.1    6.6    
+  STATION             MIN     AVG     MAX     RH   BARR    WET BULB   DEW POINT   PERCEIVED   PRECIP   WIND   GUSTS   W DIR  
+  IDENTIFIER          °C      °C      °C      %    HPA     °C         °C          °C          MM/HR    KM/H   KM/H    °      
+  2021-12-03 21 PST   -12.0   -12.0   -10.3   73   935.6              -15.9       -18                  11.5           203    
+  2021-12-03 22 PST   -12.5   -11.0   -9.9    69   935.3              -15.7       -18                  8.6            184    
+  2021-12-03 23 PST   -13.9   -13.9   -10.8   73   935.0              -17.7       -20                  9.0            179    
+  2021-12-04 00 PST   -14.8   -14.4   -11.0   78   934.7              -17.4       -21                  9.4            186    
+  2021-12-04 01 PST   -14.6   -14.6   -13.2   76   934.1              -18.0       -21                  9.4            178    
+  2021-12-04 02 PST   -15.4   -14.4   -12.8   75   933.3              -18.0       -22                  10.8           166    
+  2021-12-04 03 PST   -14.5   -13.7   -11.6   74   932.5              -17.4       -18                  5.0            187    
+  2021-12-04 04 PST   -15.4   -12.9   -12.9   75   931.6              -16.4       -17                  1.8            0      
+  2021-12-04 05 PST   -16.2   -15.6   -12.5   82   930.9              -18.0       -22                  7.9            143    
+  2021-12-04 06 PST   -17.3   -16.7   -15.0   80   930.2              -19.4       -21                  5.0            166    
+  2021-12-04 07 PST   -17.0   -15.5   -14.8   82   929.1              -17.8       -21                  5.8            138    
+  2021-12-04 08 PST   -18.0   -17.7   -15.6   83   928.8              -19.9       -25                  9.4            119    
+  2021-12-04 09 PST   -17.7   -16.6   -15.7   83   928.0              -18.9       -21                  3.6            175    
+  2021-12-04 10 PST   -16.7   -14.6   -14.2   80   927.2              -17.3       -18                  1.8            0      
+  2021-12-04 11 PST   -14.5   -11.8   -11.8   80   926.2              -14.6       -19                  6.1            116    
+  2021-12-04 12 PST   -11.7   -10.6   -10.3   76   925.3              -14.0       -16                  6.1            341    
+  2021-12-04 13 PST   -10.7   -10.5   -10.3   76   924.4              -14.0       -16                  10.4           37     
+  2021-12-04 14 PST   -10.4   -9.8    -9.5    76   924.5              -13.4       -13                  5.0            293    
+  2021-12-04 15 PST   -10.8   -10.5   -9.8    83   924.7              -12.9       -14                  5.4            308    
+  2021-12-04 16 PST   -11.2   -11.2   -10.4   81   925.3              -13.9       -13                  3.6            242    
+  2021-12-04 17 PST   -11.7   -11.3   -11.1   83   926.2              -13.7       -16                  6.5            322    
+  2021-12-04 18 PST   -11.4   -11.2   -10.5   77   927.0              -14.4       -18                  14.8           341    
+  2021-12-04 19 PST   -12.4   -12.4   -11.2   80   927.9              -15.2       -21                  19.1           338    
+  2021-12-04 20 PST   -13.7   -13.7   -12.5   84   929.1              -15.8       -22                  18.0           334    
 
-       Station name: HOWE SOUND - PAM ROCKS
-  Temperature range: 4.3 - 9.8 °C
-     Humidity range: 91 - 97 percent
-     Pressure range: 1016.9 - 1024.3 hPa
-     Wet bulb range: 4.1 - 7.9 °C
-     Dewpoint range: 3.3 - 7.6 °C
-Total precipitation: 50.0 mm
- Mean precipitation: 1.4 mm/hr
- Peak precipitation: 4.2 mm/hr
-    Peak wind speed: 37.7 km/h
-
+       Station name: Edmonton International
+  Temperature range: -18 - -9.5 °C
+     Humidity range: 69 - 84 percent
+     Pressure range: 924.4 - 935.6 hPa
+     Wet bulb range: <not valid>
+     Dewpoint range: -19.9 - -12.9 °C
+    Windchill range: -25 - -13 °C
+      Humidex range: <not valid>
+Total precipitation: 0.0 mm
+ Mean precipitation: 0.0 mm/hr
+ Peak precipitation: 0 mm/hr
+    Peak wind speed: 19.1 km/h
 ```
+## Output Notes
+
+Except for the perceived temperature column, all columns in the output table are passed through from the raw SWOB data without interpretation. Missing values mean that the underlying value was not provided in the station observation report.
+
+Weather stations operated by NavCanada (-MAN type stations) do not generally report wet bulb temperatures. In addition, many automatic weather stations (-AUTO type stations) do not report precipitation amounts.
+
+Wind direction is given in degrees from true north: 0 = north, 90 = east, 180 = south, 270 = west, etc.
+
+The perceived temperature column contains humidex (positive) or windchill (negative) temperature values computed internally by Weatherdata. These values are computed using formulae published by Environment Canada, however the windchill is computed based on worst-case conditions (lowest reported temperature and highest reported wind speed, even if these readings did not occur simultaneously) and may be colder than officially published figures from EC.
 
 ## Usage
 #### Single-shot Mode
@@ -100,7 +97,7 @@ Acquires and presents a summary of weather observations recorded by the specifie
 
 Acquires and presents a summary of weather observations recorded by the specified station from midnight, 25 November 2021, Pacific Time to midnight, 26 November 2021, Pacific Time.
 
-`weatherdata -s <identifier> --total --hours 36 --endtime "2021-11-26 00 PST"`
+`weatherdata -s <identifier> --total --hours 12 --endtime "2021-11-26 00 PST"`
 
 Acquires and presents a summary of weather observations recorded by the specified station for twelve hours up to midnight, 26 November 2021, Pacific Time.
 
@@ -112,11 +109,11 @@ Most weather stations are included in the [SWOB station list CSV](https://dd.wea
 
 For example, the automatic weather station in Flin Flon, MB, is identified as `CWFO-AUTO` while the manual weather station at Toronto Pearson Airport is identified as `CYYZ-MAN`.
 
-A map of Environment Canada stations (with IATA ids) is  available via [GeoMet](https://api.weather.gc.ca/collections/swob-realtime/items).
+A map of Environment Canada stations (with IATA IDs) is available via [GeoMet](https://api.weather.gc.ca/collections/swob-realtime/items).
 
 Weatherdata can also harvest data from Environment Canada partners (typically Provincial entities) included in the [partner station list](https://dd.weather.gc.ca/observations/doc/swob-xml_partner_station_list.csv).
 
-Unfortunately, Environment Canada does not provide any way to automatically create data feed URLs for partner stations. To determine the identifier for a partner station:
+Unfortunately, Environment Canada does not provide any way to automatically build data feed URLs for partner stations. To determine the identifier for a partner station, except for one operated by the Yukon government:
 
  1. Find a station of interest in the station list.
  2. Note the 'IATA ID' in column A.
@@ -126,7 +123,7 @@ Unfortunately, Environment Canada does not provide any way to automatically crea
 
 The Weatherdata station identifier is in the form `partners/<step5>/<step2>` For example: `partners/dfo-ccg-lighthouse/nootka`
 
-Note: this technique does not work for partner stations operated by the Yukon government. To determine the identifier for a YT partner station:
+To determine the identifier for a partner station operated by the Yukon government:
 
  1. Browse to https://dd.weather.gc.ca/observations/swob-ml/partners/yt-gov
  2. Enter any sub-directory.

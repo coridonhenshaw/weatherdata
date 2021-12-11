@@ -37,6 +37,10 @@ func (c *CacheStruct) Open() {
 
 }
 
+func (c *CacheStruct) GetSQLConnection() *sql.DB {
+	return c.sqliteDatabase
+}
+
 func (c *CacheStruct) Get(URL string) (string, error) {
 	var err error
 	var Text string
@@ -78,13 +82,13 @@ func (c *CacheStruct) Close() {
 	if err == nil {
 		_, err = statement.Exec(Timestamp)
 	} else {
-		fmt.Println("SQLite error", err)
+		fmt.Println("SQLite error when expiring cache", err)
 		os.Exit(1)
 	}
 
 	_, err = c.sqliteDatabase.Exec("VACUUM")
 	if err != nil {
-		fmt.Println("SQLite error", err)
+		fmt.Println("SQLite error when vaccuming", err)
 		os.Exit(1)
 	}
 

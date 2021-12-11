@@ -2,7 +2,6 @@ package main
 
 import (
 	"fmt"
-	"log"
 	"os"
 	"strconv"
 	"time"
@@ -21,6 +20,10 @@ type ObservationSummary struct {
 	MaxWetBulbTemperature float64
 	MinDewPoint           float64
 	MaxDewPoint           float64
+	MinWindchill          float64
+	MaxWindchill          float64
+	MinHumidex            float64
+	MaxHumidex            float64
 	TotalPrecipitation    float64
 	PeakPrecipitation     float64
 	PeakWindSpeed         float64
@@ -32,7 +35,11 @@ func (s *ObservationSummary) fill_defaults() {
 	s.MaxPressure = -9999999
 	s.MaxTemperature = -9999999
 	s.MaxDewPoint = -9999999
+	s.MaxWindchill = -9999999
 	s.MaxWetBulbTemperature = -9999999
+	s.MaxHumidex = -9999999
+	s.MinHumidex = 9999999
+	s.MinWindchill = 9999999
 	s.MinDewPoint = 9999999
 	s.MinHumidity = 9999999
 	s.MinPressure = 9999999
@@ -70,12 +77,7 @@ func SetMinMax(Min *float64, Max *float64, Input string) {
 func GetTotals(Station string, StartTime time.Time, EndTime time.Time) error {
 
 	var err error
-
-	BaseURL, err := MakeBaseURL(Station)
-	if err != nil {
-		fmt.Println(err)
-		os.Exit(1)
-	}
+	var GOE GetObservationEngine
 
 	var Observation Observation
 	var Obs ObservationSummary
@@ -83,18 +85,8 @@ func GetTotals(Station string, StartTime time.Time, EndTime time.Time) error {
 
 	var Hours = int(EndTime.Sub(StartTime).Hours())
 
-	UTCLoc, err := time.LoadLocation("UTC")
-	if err != nil {
-		log.Fatal(`Failed to load location "UTC"`)
-	}
-
-	LocalLoc, err := time.LoadLocation("Local")
-	if err != nil {
-		log.Fatal(`Failed to load location "Local"`)
-	}
-
 	table := tablewriter.NewWriter(os.Stdout)
-	table.SetHeader([]string{"Time", "Min\n°C", "Avg\n°C", "Max\n°C", "Hum\n%", "Pressure\nhPA", "Wet Bulb\n°C", "Dew Point\n°C", "Precip\nmm/hr", "Wind\nkm/h", "Gusts\nkm/h", "Wind Dir\n°"})
+	table.SetHeader([]string{"Station\nIdentifier", "Min\n°C", "Avg\n°C", "Max\n°C", "RH\n%", "Barr\nhPA", "Wet Bulb\n°C", "Dew Point\n°C", "Perceived\n°C", "Precip\nmm/hr", "Wind\nkm/h", "Gusts\nkm/h", "W Dir\n°"})
 	table.SetBorder(false)
 	table.SetAutoWrapText(false)
 	table.SetAutoFormatHeaders(true)
@@ -118,37 +110,32 @@ func GetTotals(Station string, StartTime time.Time, EndTime time.Time) error {
 		ObservationTime := StartTime.Add(time.Hour * time.Duration(i))
 		ObservationTime = ObservationTime.In(UTCLoc)
 
-		FinalURL, err := InjectURLDateTime(BaseURL, ObservationTime)
+		Observation, err = GOE.Get(Station, ObservationTime)
 		if err != nil {
-			fmt.Println(err)
-			os.Exit(1)
+			fmt.Println("Error", err, "acquiring data from", Station, "for", ObservationTime)
+			continue
 		}
-
-		// fmt.Println(FinalURL)
-
-		s, err := HTTPSGet(FinalURL)
-		if err != nil {
-			fmt.Println(err)
-		}
-
-		Observation, _ = ParseObservation(s)
 
 		//		fmt.Println(Observation)
 
-		Row := []string{ObservationTime.In(LocalLoc).Format("2006-01-02 15 MST"), Observation.MinTemperature, Observation.Temperature, Observation.MaxTemperature, Observation.Humidity, Observation.Pressure, Observation.WetBulbTemperature, Observation.DewPoint, Observation.Precipitation, Observation.AverageWindSpeed, Observation.PeakWindSpeed, Observation.AverageWindDirection}
+		Row := []string{ObservationTime.In(LocalLoc).Format("2006-01-02 15 MST"), Observation.MinTemperature, Observation.Temperature, Observation.MaxTemperature, Observation.Humidity, Observation.Pressure, Observation.WetBulbTemperature, Observation.DewPoint, Observation.Windchill + Observation.Humidex, Observation.Precipitation, Observation.AverageWindSpeed, Observation.PeakWindSpeed, Observation.AverageWindDirection}
 		table.Append(Row)
 
 		var Junk float64
 
 		SetMinMax(&Obs.MinTemperature, &Junk, Observation.MinTemperature)
+		SetMinMax(&Obs.MinTemperature, &Junk, Observation.Temperature)
 		SetMinMax(&Junk, &Obs.MaxTemperature, Observation.MaxTemperature)
+		SetMinMax(&Junk, &Obs.MaxTemperature, Observation.Temperature)
 		SetMinMax(&Obs.MinHumidity, &Obs.MaxHumidity, Observation.Humidity)
 		SetMinMax(&Obs.MinPressure, &Obs.MaxPressure, Observation.Pressure)
 		SetMinMax(&Obs.MinWetBulbTemperature, &Obs.MaxWetBulbTemperature, Observation.WetBulbTemperature)
 		SetMinMax(&Obs.MinDewPoint, &Obs.MaxDewPoint, Observation.DewPoint)
+		SetMinMax(&Obs.MinWindchill, &Obs.MaxWindchill, Observation.Windchill)
 		SetTotal(&Obs.TotalPrecipitation, Observation.Precipitation)
 		SetMinMax(&Junk, &Obs.PeakPrecipitation, Observation.Precipitation)
 		SetMinMax(&Junk, &Obs.PeakWindSpeed, Observation.PeakWindSpeed)
+		SetMinMax(&Junk, &Obs.PeakWindSpeed, Observation.AverageWindSpeed)
 	}
 
 	table.Render()
@@ -184,6 +171,18 @@ func GetTotals(Station string, StartTime time.Time, EndTime time.Time) error {
 		fmt.Println("     Dewpoint range:", Obs.MinDewPoint, "-", Obs.MaxDewPoint, "°C")
 	} else {
 		fmt.Println("     Dewpoint range: <not valid>")
+	}
+
+	if Obs.MinWindchill != 9999999 && Obs.MaxWindchill != -9999999 {
+		fmt.Println("    Windchill range:", Obs.MinWindchill, "-", Obs.MaxWindchill, "°C")
+	} else {
+		fmt.Println("    Windchill range: <not valid>")
+	}
+
+	if Obs.MinHumidex != 9999999 && Obs.MaxHumidex != -9999999 {
+		fmt.Println("      Humidex range:", Obs.MinHumidex, "-", Obs.MaxHumidex, "°C")
+	} else {
+		fmt.Println("      Humidex range: <not valid>")
 	}
 
 	if Obs.TotalPrecipitation >= 0 {

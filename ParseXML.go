@@ -1,6 +1,9 @@
 package main
 
 import (
+	"fmt"
+	"math"
+	"strconv"
 	"strings"
 
 	"github.com/antchfx/xmlquery"
@@ -47,10 +50,16 @@ type Observation struct {
 	Pressure             string
 	WetBulbTemperature   string
 	DewPoint             string
+	Windchill            string
+	Humidex              string
 	Precipitation        string
 	AverageWindSpeed     string
 	PeakWindSpeed        string
 	AverageWindDirection string
+}
+
+func RoundFloat(In float64) string {
+	return fmt.Sprintf("%.0f", math.Round(In))
 }
 
 func ParseObservation(XMLString string) (Observation, error) {
@@ -99,6 +108,48 @@ func ParseObservation(XMLString string) (Observation, error) {
 	}
 
 	O.AverageWindDirection = GetValue(XMLDoc, "avg_wnd_dir_10m_pst1hr")
+	if O.AverageWindDirection == "" {
+		O.AverageWindDirection = GetValue(XMLDoc, "avg_wnd_dir_10m_pst2mts")
+	}
+
+	var WindSpeed float64
+
+	Temperature, err := strconv.ParseFloat(O.MinTemperature, 64)
+
+	if err == nil {
+		WindSpeed, err = strconv.ParseFloat(O.PeakWindSpeed, 64)
+
+		if err != nil {
+			WindSpeed, err = strconv.ParseFloat(O.AverageWindSpeed, 64)
+		}
+
+	}
+
+	// Windchill formula per https://www.climate.weather.gc.ca/glossary_e.html
+	if err == nil && Temperature < 0 {
+		if WindSpeed >= 5 {
+			O.Windchill = RoundFloat(13.12 + 0.6215*Temperature - 11.37*math.Pow(WindSpeed, 0.16) + 0.3965*Temperature*math.Pow(WindSpeed, 0.16))
+		} else {
+			O.Windchill = RoundFloat(Temperature + ((-1.59+0.1345*Temperature)/5)*WindSpeed)
+		}
+
+	}
+
+	// Humidex formula per https://www.climate.weather.gc.ca/glossary_e.html
+	if err == nil && Temperature >= 20 {
+		var Dewpoint float64
+		Dewpoint, err = strconv.ParseFloat(O.DewPoint, 64)
+
+		if err != nil {
+
+			var e float64 = 6.11 * math.Exp(5417.7530*((1/273.15)-(1/Dewpoint)))
+			var h float64 = (0.5555) * (e - 10.0)
+			if h >= 1 {
+				O.Humidex = RoundFloat(Temperature + h)
+			}
+
+		}
+	}
 
 	return O, nil
 
