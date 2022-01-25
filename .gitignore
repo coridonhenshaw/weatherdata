@@ -2,4 +2,7 @@ sources.txt
 *.csv
 *.zip
 *.kml
+*.html
+*.json
 weatherdata
+.gitignore

@@ -74,7 +74,7 @@ func SetMinMax(Min *float64, Max *float64, Input string) {
 
 }
 
-func GetTotals(Station string, StartTime time.Time, EndTime time.Time) error {
+func PresentTotals(Station string, StartTime time.Time, EndTime time.Time) error {
 
 	var err error
 	var GOE GetObservationEngine
@@ -103,7 +103,7 @@ func GetTotals(Station string, StartTime time.Time, EndTime time.Time) error {
 	ST := StartTime.In(UTCLoc).Format("2006-01-02 15 MST") + " (" + StartTime.In(LocalLoc).Format("2006-01-02 15 MST") + ")"
 	ET := EndTime.In(UTCLoc).Format("2006-01-02 15 MST") + " (" + EndTime.In(LocalLoc).Format("2006-01-02 15 MST") + ")"
 
-	fmt.Printf("\nTotalizing station %s from %s to %s (%d hours):\n\n", Station, ST, ET, Hours)
+	fmt.Printf("Totalizing station %s from %s to %s (%d hours):\n\n", Station, ST, ET, Hours)
 
 	for i := 1; i <= Hours; i++ {
 

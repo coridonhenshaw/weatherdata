@@ -6,11 +6,11 @@ The intended use case is to access weather information that Environment Canada d
 
 Weatherdata is also capable of totalizing observation data over multiple hours (limited only by data retention on the SWOB system) to report on cumulative precipitation and the ranges of observed values over time.
 
-Weatherdata is intended for casual, interactive, use. Use of Weatherdata as a backend for large-scale scraping or to implement public-access services is prohibited. Tools for these use cases should connect with Environment Canada's HPFX server or AMQP push feeds.
+Weatherdata is intended for casual, interactive, use. Use of Weatherdata as a backend for large-scale scraping or to implement public-access services is prohibited. Tools for these use cases should connect with Environment Canada's HPFX server or AMQP  feed.
 
-## Example
+## Sample Output
 ```
-> weatherdata -s CYEG-MAN --total --hours 24       
+> weatherdata totalize CYEG-MAN -o 24       
 
 Totalizing station CYEG-MAN from 2021-12-04 04 UTC (2021-12-03 20 PST) to 2021-12-05 04 UTC (2021-12-04 20 PST) (24 hours):
 
@@ -56,88 +56,81 @@ Total precipitation: 0.0 mm
 ```
 ## Output Notes
 
-Except for the perceived temperature column, all columns in the output table are passed through from the raw SWOB data without interpretation. Missing values mean that the underlying value was not provided in the station observation report.
+Except for the perceived temperature column, all columns in the output table are passed through from the raw SWOB data without interpretation. Missing values mean that the underlying value was not provided in the station observation report. Not all stations report all values at all times.
 
-Weather stations operated by NavCanada (-MAN type stations) do not generally report wet bulb temperatures. In addition, many automatic weather stations (-AUTO type stations) do not report precipitation amounts.
-
-Wind direction is given in degrees from true north: 0 = north, 90 = east, 180 = south, 270 = west, etc.
+Wind direction is given in degrees from true north: 0/360 = north, 90 = east, 180 = south, 270 = west, etc.
 
 The perceived temperature column contains humidex (positive) or windchill (negative) temperature values computed internally by Weatherdata. These values are computed using formulae published by Environment Canada, however the windchill is computed based on worst-case conditions (lowest reported temperature and highest reported wind speed, even if these readings did not occur simultaneously) and may be colder than officially published figures from EC.
 
-## Usage
+## Example Usage
+
+#### Station List Mode
+
+`weatherdata getstations %toronto%`
+
+Show all SWOB stations with names that contain the word Toronto. Uses SQL LIKE syntax, where `%` is a wildcard.
+
+`weatherdata getstations --kml stations.kml`
+
+Exports the locations of known SWOB to `stations.kml` for use in Google Earth or similar tools.
+
 #### Single-shot Mode
 
-`weatherdata -s <identifier>`
+`weatherdata observation CXTO-AUTO`
 
-Acquires and presents the weather observations from the station specified for the most recent hour if available.
+Acquires and presents the weather observations taken at CXTO-AUTO (Toronto downtown) for the most recent hour. Weatherdata will return an error if no observations are available.
 
-`weatherdata -s <identifier> --hours 2`
+`weatherdata observation CXTO-AUTO --hours 2`
 
-Acquires and presents the weather observations from the station specified two hours into the past.
+Acquires and presents the weather observations taken at CXTO-AUTO (Toronto downtown) two hours in the past. Weatherdata will return an error if no observations are available.
 
-`weatherdata -s <identifier> --starttime "2021-11-26 12 PST"`
+`weatherdata observation CXTO-AUTO --datetime "2021-11-26 12 EST"`
 
-Acquires and presents the weather observations from the station specified at 12 PM, 26 November 2021, Pacific Time.
+Acquires and presents the weather observations taken at CXTO-AUTO on 12 PM, 26 November 2021, Eastern Time.
 
-`weatherdata -s "CYYZ-MAN CWTQ-AUTO CYVR-MAN CYYC-MAN"`
+The SWOB system typically retains historical weather for 30 days; Weatherdata will return an error if no observations are available at the specified date and time.
+
+`weatherdata observation "CYYZ-MAN CWTQ-AUTO CYVR-MAN CYYC-MAN"`
 
 Acquires and presents the weather observations from the major airports in Toronto, Monteal, Vancouver, and Calgary for the most recent hour.
 
+When multiple stations are specified, the station list must be surrounded in double quotes as shown above.
+
 #### Totalizing Mode
 
-`weatherdata -s <identifier> --total --hours 12`
+`weatherdata totalize CVVR-AUTO --hours 12`
 
-Acquires and presents a summary of weather observations recorded by the specified station over the past 12 hours
+Acquires and presents a summary of weather observations recorded at CVVR-AUTO (Vancouver Sea Island) over the past 12 hours.
 
-`weatherdata -s <identifier> --total --starttime "2021-11-25 00 PST"`
+`weatherdata totalize CVVR-AUTO --starttime "2021-11-25 00 PST"`
 
-Acquires and presents a summary of weather observations recorded by the specified station from midnight, 25 November 2021, Pacific Time to the present time.
+Acquires and presents a summary of weather observations recorded by CVVR-AUTO from midnight, 25 November 2021, Pacific Time to the present time.
 
-`weatherdata -s <identifier> --total --starttime "2021-11-25 00 PST" --endtime "2021-11-26 00 PST"`
+The SWOB system typically retains historical weather for 30 days; Weatherdata gracefully fail if no observations are available during any portion of the specified date and time window.
 
-Acquires and presents a summary of weather observations recorded by the specified station from midnight, 25 November 2021, Pacific Time to midnight, 26 November 2021, Pacific Time.
+`weatherdata totalize CVVR-AUTO --starttime "2021-11-25 00 PST" --endtime "2021-11-26 00 PST"`
 
-`weatherdata -s <identifier> --total --hours 12 --endtime "2021-11-26 00 PST"`
+Acquires and presents a summary of weather observations recorded by CVVR-AUTO from midnight, 25 November 2021, Pacific Time to midnight, 26 November 2021, Pacific Time.
 
-Acquires and presents a summary of weather observations recorded by the specified station for twelve hours up to midnight, 26 November 2021, Pacific Time.
+The SWOB system typically retains historical weather for 30 days; Weatherdata gracefully fail if no observations are available during any portion of the specified date and time window.
 
-## Station Identifiers
+`weatherdata totalize CVVR-AUTO --hours 12 --endtime "2021-11-26 00 PST"`
 
-The Environment Canada SWOB API provides three separate endpoints for different types of weather stations.
+Acquires and presents a summary of weather observations recorded by CVVR-AUTO for twelve hours up to midnight, 26 November 2021, Pacific Time.
 
-Most weather stations are included in the [SWOB station list CSV](https://dd.weather.gc.ca/observations/doc/swob-xml_station_list.csv) and are identified to Weatherdata in the form `Cxxx-yyyy`, where `Cxxx` is the IATA four letter station code (found in CSV column A) and `yyyy` indicates whether the station is AUTOmatic or MANual (found in CSV column J).
+The SWOB system typically retains historical weather for 30 days; Weatherdata gracefully fail if no observations are available during any portion of the specified date and time window.
 
-For example, the automatic weather station in Flin Flon, MB, is identified as `CWFO-AUTO` while the manual weather station at Toronto Pearson Airport is identified as `CYYZ-MAN`.
+## Notes
 
 A map of Environment Canada stations (with IATA IDs) is available via [GeoMet](https://api.weather.gc.ca/collections/swob-realtime/items).
 
-Weatherdata can also harvest data from Environment Canada partners (typically Provincial entities) included in the [partner station list](https://dd.weather.gc.ca/observations/doc/swob-xml_partner_station_list.csv).
-
-Unfortunately, Environment Canada does not provide any way to automatically build data feed URLs for partner stations. To determine the identifier for a partner station, except for one operated by the Yukon government:
-
- 1. Find a station of interest in the station list.
- 2. Note the 'IATA ID' in column A.
- 3. Note the 'data provider' in column N.
- 4. Browse to https://dd.weather.gc.ca/observations/swob-ml/partners
- 5. Make an educated guess as to which directory name most closely matches the name of the data provider. Note the result.
-
-The Weatherdata station identifier is in the form `partners/<step5>/<step2>` For example: `partners/dfo-ccg-lighthouse/nootka`
-
-To determine the identifier for a partner station operated by the Yukon government:
-
- 1. Browse to https://dd.weather.gc.ca/observations/swob-ml/partners/yt-gov
- 2. Enter any sub-directory.
- 3. Note the location names in the directory listing.
-
-The Weatherdata station identifier for YT government stations is in the form `/partners/yt-gov/<step3>`. For example: `partners/yt-gov/hasselberg`
-
 Weatherdata does not currently read data provided by MSC-operated marine buoys under the https://dd.weather.gc.ca/observations/swob-ml/marine/moored-buoys/ hierarchy.
 
-## Note
+Data provided by Environment Canada are subject to assorted terms of use, as [made available by Environment Canada](https://eccc-msc.github.io/open-data/msc-data/obs_station/readme_obs_insitu_en/). These terms are separate from the terms that apply to Weatherdata.
 
-Data provided by Environment Canada are subject to assorted terms of use, as [made available by Environment Canada](https://eccc-msc.github.io/open-data/msc-data/obs_station/readme_obs_insitu_en/).
+## Platform Compatibility
 
-These terms are separate from the terms that apply to Weatherdata.
+Weatherdata is built on Linux (specifically: OpenSUSE) but should build on any platform supported by Golang where Sqlite is available.
 
 ## License
 

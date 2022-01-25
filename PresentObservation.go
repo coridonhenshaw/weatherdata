@@ -13,9 +13,10 @@ func PresentObservation(Stations string, ObsTime time.Time) error {
 
 	var GOE GetObservationEngine
 
-	ST := ObsTime.In(UTCLoc).Format("2006-01-02 15 MST") + " (" + ObsTime.In(LocalLoc).Format("2006-01-02 15 MST") + ")"
+	ObsTime = ObsTime.In(UTCLoc)
+	ST := ObsTime.Format("2006-01-02 15 MST") + " (" + ObsTime.In(LocalLoc).Format("2006-01-02 15 MST") + ")"
 
-	fmt.Printf("\nReports at %s from %s:\n\n", ST, Stations)
+	fmt.Printf("Reports at %s from %s:\n\n", ST, Stations)
 
 	table := tablewriter.NewWriter(os.Stdout)
 	table.SetHeader([]string{"Station\nName", "Min\n°C", "Avg\n°C", "Max\n°C", "RH\n%", "Barr\nhPA", "Wet Bulb\n°C", "Dew Point\n°C", "Perceived\n°C", "Precip\nmm/hr", "Wind\nkm/h", "Gusts\nkm/h", "W Dir\n°"})
@@ -32,40 +33,20 @@ func PresentObservation(Stations string, ObsTime time.Time) error {
 	table.SetHeaderAlignment(tablewriter.ALIGN_LEFT)
 	table.SetAlignment(tablewriter.ALIGN_LEFT)
 
+	var HaveError bool
+	var HaveValid bool = false
+
 	StationArray := strings.Fields(Stations)
 
 	for _, Station := range StationArray {
-		//		fmt.Println(Station)
-		//		continue
-
-		// q, err := MakeBaseURL(Station)
-		// if err != nil {
-		// 	fmt.Println(err)
-		// 	os.Exit(1)
-		// }
-		//
-		// q, err = InjectURLDateTime(q, ObsTime.In(UTCLoc))
-		// if err != nil {
-		// 	fmt.Println(err)
-		// 	os.Exit(1)
-		// }
-		//
-		// // fmt.Println(q)
-		// // os.Exit(0)
-		//
-		// s, err := HTTPSGet(q)
-		// if err != nil {
-		// 	fmt.Println("HTTP Error", err, "acquiring", q)
-		// 	continue
-		// }
-		//
-		// Observation, _ := ParseObservation(s)
 
 		Observation, err := GOE.Get(Station, ObsTime)
 		if err != nil {
-			fmt.Println("error", err, "acquiring observation from", Station)
+			fmt.Println("Error:", err, "acquiring observation from", Station, "for", ObsTime)
+			HaveError = true
 			continue
 		}
+		HaveValid = true
 
 		Row := []string{Observation.Station, Observation.MinTemperature, Observation.Temperature, Observation.MaxTemperature, Observation.Humidity, Observation.Pressure, Observation.WetBulbTemperature, Observation.DewPoint, Observation.Windchill + Observation.Humidex, Observation.Precipitation, Observation.AverageWindSpeed, Observation.PeakWindSpeed, Observation.AverageWindDirection}
 		table.Append(Row)
@@ -93,8 +74,14 @@ func PresentObservation(Stations string, ObsTime time.Time) error {
 
 	}
 
-	table.Render()
-	fmt.Println()
+	if HaveError {
+		fmt.Println()
+	}
+
+	if HaveValid {
+		table.Render()
+		fmt.Println()
+	}
 
 	return nil
 }

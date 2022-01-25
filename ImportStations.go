@@ -1,6 +1,7 @@
 package main
 
 import (
+	"database/sql"
 	"encoding/csv"
 	"fmt"
 	"io"
@@ -8,9 +9,14 @@ import (
 	"strings"
 )
 
-func ImportStations() error {
+type StationsStruct struct {
+	SQLdb *sql.DB
+}
+
+func (o *StationsStruct) Import() error {
 
 	SQLdb := Cache.GetSQLConnection()
+	o.SQLdb = SQLdb
 
 	SQL := `CREATE TEMPORARY TABLE IF NOT EXISTS StationList (
     "Identifier" TEXT PRIMARY KEY,
@@ -169,4 +175,20 @@ func ImportStations() error {
 		//			fmt.Printf("%-9s  %-25s  %s\n", Identifier, Province, Name)
 	}
 	return nil
+}
+
+func (o *StationsStruct) Validate(Name string) bool {
+
+	var Count int
+
+	SQL := `SELECT COUNT() FROM StationList WHERE Identifier = ?`
+	err := o.SQLdb.QueryRow(SQL, Name).Scan(&Count)
+	if err != nil {
+		return false
+	}
+	if Count > 0 {
+		return true
+	}
+	return false
+
 }

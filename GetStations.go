@@ -13,8 +13,6 @@ func GetStations(Query string, KMLFile string) error {
 
 	SQLdb := Cache.GetSQLConnection()
 
-	ImportStations()
-
 	if len(Query) == 0 {
 		SQL := `SELECT Identifier, Name, Province, Latitude, Longitude FROM StationList ORDER BY Province, Name`
 		Row, err = SQLdb.Query(SQL)
