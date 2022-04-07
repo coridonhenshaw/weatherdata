@@ -54,6 +54,8 @@ func (o *StationsStruct) Import() error {
 	reader := csv.NewReader(strings.NewReader(StationString))
 	_, _ = reader.Read()
 
+	UnknownProviderMap := make(map[string]bool)
+
 	for {
 		line, error := reader.Read()
 		if error == io.EOF {
@@ -107,7 +109,7 @@ func (o *StationsStruct) Import() error {
 		} else if strings.HasPrefix(MSCID, "YT-DE-WRB_") {
 			Site += "yt-water/" + strings.ToLower(I)
 		} else {
-			fmt.Println("Unknown data provider", DataProvider)
+			UnknownProviderMap[DataProvider] = true
 		}
 
 		Identifier := Site
@@ -120,6 +122,15 @@ func (o *StationsStruct) Import() error {
 			return err
 		}
 
+	}
+
+	var Flag bool
+	for k := range UnknownProviderMap {
+		fmt.Println("Unknown data provider:", k)
+		Flag = true
+	}
+	if Flag {
+		fmt.Println()
 	}
 
 	var ProvinceMap = map[string]string{
