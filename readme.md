@@ -6,7 +6,7 @@ The intended use case is to access weather information that Environment Canada d
 
 Weatherdata is also capable of totalizing observation data over multiple hours (limited only by data retention on the SWOB system) to report on cumulative precipitation and the ranges of observed values over time.
 
-Weatherdata is intended for casual, interactive, use. Use of Weatherdata as a backend for large-scale scraping or to implement public-access services is prohibited. Tools for these use cases should connect with Environment Canada's HPFX server or AMQP  feed.
+Weatherdata is intended for casual, interactive, use. Use of Weatherdata as a backend for large-scale scraping or to implement public-access services is prohibited. Tools for these use cases should connect with Environment Canada's HPFX server or AMQP feed.
 
 ## Sample Output
 ```
@@ -53,6 +53,19 @@ Total precipitation: 0.0 mm
  Mean precipitation: 0.0 mm/hr
  Peak precipitation: 0 mm/hr
     Peak wind speed: 19.1 km/h
+
+
+> weatherdata observation CVVR-AUTO
+
+Weatherdata Release 0 -- https://github.com/coridonhenshaw/weatherdata
+
+Reports at 2023-02-23 21 UTC (2023-02-23 13 PST) from CVVR-AUTO:
+
+  STATION                    MIN    AVG    MAX    REL     BARR     WET    DEW     DEW POINT    HUMIDEX /   PRECIP   WIND    GUST    WIND  
+  NAME                       TEMP   TEMP   TEMP   HUMID   PRESS    BULB   POINT   DIFFERENCE   WINDCHILL   RATE     SPEED   SPEED   DIR   
+                             °C     °C     °C     %       HPA      °C     °C      °C           °C          MM/HR    KM/H    KM/H    °     
+  VANCOUVER SEA ISLAND CCG   0.2    1.2    1.9    27      1011.4   -3.6   -15.9   17.1                     0        20.5    34.7    96
+
 ```
 ## Output Notes
 
@@ -61,6 +74,8 @@ Except for the perceived temperature column, all columns in the output table are
 Wind direction is given in degrees from true north: 0/360 = north, 90 = east, 180 = south, 270 = west, etc.
 
 The perceived temperature column contains humidex (positive) or windchill (negative) temperature values computed internally by Weatherdata. These values are computed using formulae published by Environment Canada, however the windchill is computed based on worst-case conditions (lowest reported temperature and highest reported wind speed, even if these readings did not occur simultaneously) and may be colder than officially published figures from EC.
+
+The dew point difference column contains the difference between the average air temperature and the dew point. A larger difference between temperature and dew point usually indicates more comfortable weather.
 
 ## Example Usage
 
@@ -124,7 +139,7 @@ The SWOB system typically retains historical weather for 30 days; Weatherdata gr
 
 A map of Environment Canada stations (with IATA IDs) is available via [GeoMet](https://api.weather.gc.ca/collections/swob-realtime/items).
 
-Weatherdata does not currently read data provided by MSC-operated marine buoys under the https://dd.weather.gc.ca/observations/swob-ml/marine/moored-buoys/ hierarchy.
+Weatherdata does not currently read data provided by MSC-operated marine buoys under the https://dd.weather.gc.ca/observations/swob-ml/marine/moored-buoys/ hierarchy. In addition, Weatherdata does not currently support any of the non-EC data providers (such as the Toronto and Region Conservation Authority) which have been added to the SWOB system since 2021.
 
 Data provided by Environment Canada are subject to assorted terms of use, as [made available by Environment Canada](https://eccc-msc.github.io/open-data/msc-data/obs_station/readme_obs_insitu_en/). These terms are separate from the terms that apply to Weatherdata.
 

@@ -52,6 +52,7 @@ type Observation struct {
 	DewPoint             string
 	Windchill            string
 	Humidex              string
+	DewPointDifference   string
 	Precipitation        string
 	AverageWindSpeed     string
 	PeakWindSpeed        string
@@ -60,6 +61,10 @@ type Observation struct {
 
 func RoundFloat(In float64) string {
 	return fmt.Sprintf("%.0f", math.Round(In))
+}
+
+func RoundFloatTwoPlaces(In float64) string {
+	return fmt.Sprintf("%.1f", In)
 }
 
 func ParseObservation(XMLString string) (Observation, error) {
@@ -139,6 +144,10 @@ func ParseObservation(XMLString string) (Observation, error) {
 
 	{
 		Temperature, err := strconv.ParseFloat(O.MaxTemperature, 64)
+		if err != nil {
+			Temperature, err = strconv.ParseFloat(O.Temperature, 64)
+		}
+
 		// Humidex formula per https://www.climate.weather.gc.ca/glossary_e.html
 		if err == nil && Temperature >= 20 {
 			var Dewpoint float64
@@ -151,6 +160,20 @@ func ParseObservation(XMLString string) (Observation, error) {
 					O.Humidex = RoundFloat(Temperature + h)
 				}
 			}
+		}
+	}
+
+	{
+		var Temperature float64
+		var Dewpoint float64
+		Temperature, err = strconv.ParseFloat(O.Temperature, 64)
+
+		if err == nil {
+			Dewpoint, err = strconv.ParseFloat(O.DewPoint, 64)
+		}
+
+		if err == nil {
+			O.DewPointDifference = RoundFloatTwoPlaces(math.Abs((Temperature - Dewpoint)))
 		}
 	}
 

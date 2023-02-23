@@ -19,7 +19,7 @@ func PresentObservation(Stations string, ObsTime time.Time) error {
 	fmt.Printf("Reports at %s from %s:\n\n", ST, Stations)
 
 	table := tablewriter.NewWriter(os.Stdout)
-	table.SetHeader([]string{"Station\nName", "Min\n°C", "Avg\n°C", "Max\n°C", "RH\n%", "Barr\nhPA", "Wet Bulb\n°C", "Dew Point\n°C", "Perceived\n°C", "Precip\nmm/hr", "Wind\nkm/h", "Gusts\nkm/h", "W Dir\n°"})
+	table.SetHeader([]string{"Station\nName\n", "Min\nTemp\n°C", "Avg\nTemp\n°C", "Max\nTemp\n°C", "Rel\nHumid\n%", "Barr\nPress\nhPA", "Wet\nBulb\n°C", "Dew\nPoint\n°C", "Dew Point\nDifference\n°C", "Humidex /\nWindchill\n°C", "Precip\nRate\nmm/hr", "Wind\nSpeed\nkm/h", "Gust\nSpeed\nkm/h", "Wind\nDir\n°"})
 	table.SetBorder(false)
 	table.SetAutoWrapText(false)
 	table.SetAutoFormatHeaders(true)
@@ -48,7 +48,7 @@ func PresentObservation(Stations string, ObsTime time.Time) error {
 		}
 		HaveValid = true
 
-		Row := []string{Observation.Station, Observation.MinTemperature, Observation.Temperature, Observation.MaxTemperature, Observation.Humidity, Observation.Pressure, Observation.WetBulbTemperature, Observation.DewPoint, Observation.Windchill + Observation.Humidex, Observation.Precipitation, Observation.AverageWindSpeed, Observation.PeakWindSpeed, Observation.AverageWindDirection}
+		Row := []string{Observation.Station, Observation.MinTemperature, Observation.Temperature, Observation.MaxTemperature, Observation.Humidity, Observation.Pressure, Observation.WetBulbTemperature, Observation.DewPoint, Observation.DewPointDifference, Observation.Windchill + Observation.Humidex, Observation.Precipitation, Observation.AverageWindSpeed, Observation.PeakWindSpeed, Observation.AverageWindDirection}
 		table.Append(Row)
 
 		// t1, err := time.Parse(time.RFC3339, Observation.Timestamp)
