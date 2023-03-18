@@ -7,6 +7,8 @@ import (
 	"os"
 	"path/filepath"
 	"time"
+
+	_ "github.com/mattn/go-sqlite3"
 )
 
 type CacheStruct struct {
@@ -41,15 +43,35 @@ func (c *CacheStruct) GetSQLConnection() *sql.DB {
 	return c.sqliteDatabase
 }
 
-func (c *CacheStruct) Get(URL string) (string, error) {
+func (c *CacheStruct) Get(URL string, MaxAge time.Duration) (string, error) {
 	var err error
 	var Text string
+	var Timestamp int
 
-	SQL := "SELECT Xml FROM Cache WHERE Url = ?"
+	SQL := "SELECT Timestamp, Xml FROM Cache WHERE Url = ?"
 
-	err = c.sqliteDatabase.QueryRow(SQL, URL).Scan(&Text)
+	err = c.sqliteDatabase.QueryRow(SQL, URL).Scan(&Timestamp, &Text)
 	if err != nil && err != sql.ErrNoRows {
 		return "", err
+	}
+
+	if err == sql.ErrNoRows {
+		return "", nil
+	}
+
+	t := time.Unix(int64(Timestamp), 0)
+	if t.Before(time.Now().UTC().Add(-MaxAge)) {
+		if Verbose {
+			fmt.Println("Expired", URL)
+		}
+
+		SQL := "DELETE FROM Cache WHERE Url = ?"
+		_, err = c.sqliteDatabase.Exec(SQL, URL)
+		if err != nil {
+			log.Panic(err)
+		}
+
+		return "", nil
 	}
 
 	return Text, nil
@@ -60,12 +82,7 @@ func (c *CacheStruct) Put(URL string, Text string) error {
 
 	Timestamp := time.Now().Unix()
 
-	statement, err := c.sqliteDatabase.Prepare(SQL)
-	if err != nil {
-		return err
-	}
-
-	_, err = statement.Exec(Text, URL, Timestamp)
+	_, err := c.sqliteDatabase.Exec(SQL, Text, URL, Timestamp)
 	if err != nil {
 		return err
 	}
@@ -78,18 +95,14 @@ func (c *CacheStruct) Close() {
 	SQL := "DELETE FROM Cache WHERE Timestamp < ?"
 	Timestamp := time.Now().Add(-30 * 24 * time.Hour).Unix() // 30 days
 
-	statement, err := c.sqliteDatabase.Prepare(SQL)
-	if err == nil {
-		_, err = statement.Exec(Timestamp)
-	} else {
-		fmt.Println("SQLite error when expiring cache", err)
-		os.Exit(1)
+	_, err := c.sqliteDatabase.Exec(SQL, Timestamp)
+	if err != nil {
+		log.Panic(err)
 	}
 
 	_, err = c.sqliteDatabase.Exec("VACUUM")
 	if err != nil {
-		fmt.Println("SQLite error when vaccuming", err)
-		os.Exit(1)
+		log.Panic(err)
 	}
 
 	c.sqliteDatabase.Close()

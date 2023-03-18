@@ -1,155 +1,153 @@
 # Weatherdata
 
-Weatherdata is a command-line tool to read weather observations from weather stations which report into the Environment Canada [Surface Weather Observation (SWOB)](https://dd.weather.gc.ca/observations/doc/) public data source.
+Weatherdata is a command-line tool to read Canadian weather observations from weather stations which report into the Environment Canada [Surface Weather Observation (SWOB)](https://dd.weather.gc.ca/observations/doc/) public data source. It is intended to access weather observations that Environment Canada does not include in either its [weather information site](https://weather.gc.ca/canada_e.html) or weather app.
 
-The intended use case is to access weather information that Environment Canada does not include in public-facing observations, such as precipitation rates, wet bulb temperatures, and intra-hour temperature extremes.
+In addition to extracting temperature/humidity/wind and other basic observational data, Weatherdata can extract:
 
-Weatherdata is also capable of totalizing observation data over multiple hours (limited only by data retention on the SWOB system) to report on cumulative precipitation and the ranges of observed values over time.
+ * Observations from non-EC weather stations that report into SWOB but are not shown by EC in public-facing weather station lists. 
+ * Real-time (per minute) reporting, where available from some EC weather stations.
+ * Precipitation rates.
+ * Wet bulb temperatures.
+ * Wind direction in degrees.
+ * Per hour min-max temperatures.
+ * 30 day observation history.
 
-Weatherdata is intended for casual, interactive, use. Use of Weatherdata as a backend for large-scale scraping or to implement public-access services is prohibited. Tools for these use cases should connect with Environment Canada's HPFX server or AMQP feed.
+Weatherdata is intended for casual, interactive, use. In the interests of being polite to EC's SWOB servers, use of Weatherdata as a backend for large-scale scraping or to implement public-access services is prohibited. Tools for these use cases should connect with Environment Canada's HPFX server or AMQP feed.
 
 ## Sample Output
 ```
-> weatherdata totalize CYEG-MAN -o 24       
+> weatherdata -u observation "CYYZ-MAN" -s -8
 
-Totalizing station CYEG-MAN from 2021-12-04 04 UTC (2021-12-03 20 PST) to 2021-12-05 04 UTC (2021-12-04 20 PST) (24 hours):
+Weatherdata Release 1 -- https://github.com/coridonhenshaw/weatherdata
 
-  STATION             MIN     AVG     MAX     RH   BARR    WET BULB   DEW POINT   PERCEIVED   PRECIP   WIND   GUSTS   W DIR  
-  IDENTIFIER          °C      °C      °C      %    HPA     °C         °C          °C          MM/HR    KM/H   KM/H    °      
-  2021-12-03 21 PST   -12.0   -12.0   -10.3   73   935.6              -15.9       -18                  11.5           203    
-  2021-12-03 22 PST   -12.5   -11.0   -9.9    69   935.3              -15.7       -18                  8.6            184    
-  2021-12-03 23 PST   -13.9   -13.9   -10.8   73   935.0              -17.7       -20                  9.0            179    
-  2021-12-04 00 PST   -14.8   -14.4   -11.0   78   934.7              -17.4       -21                  9.4            186    
-  2021-12-04 01 PST   -14.6   -14.6   -13.2   76   934.1              -18.0       -21                  9.4            178    
-  2021-12-04 02 PST   -15.4   -14.4   -12.8   75   933.3              -18.0       -22                  10.8           166    
-  2021-12-04 03 PST   -14.5   -13.7   -11.6   74   932.5              -17.4       -18                  5.0            187    
-  2021-12-04 04 PST   -15.4   -12.9   -12.9   75   931.6              -16.4       -17                  1.8            0      
-  2021-12-04 05 PST   -16.2   -15.6   -12.5   82   930.9              -18.0       -22                  7.9            143    
-  2021-12-04 06 PST   -17.3   -16.7   -15.0   80   930.2              -19.4       -21                  5.0            166    
-  2021-12-04 07 PST   -17.0   -15.5   -14.8   82   929.1              -17.8       -21                  5.8            138    
-  2021-12-04 08 PST   -18.0   -17.7   -15.6   83   928.8              -19.9       -25                  9.4            119    
-  2021-12-04 09 PST   -17.7   -16.6   -15.7   83   928.0              -18.9       -21                  3.6            175    
-  2021-12-04 10 PST   -16.7   -14.6   -14.2   80   927.2              -17.3       -18                  1.8            0      
-  2021-12-04 11 PST   -14.5   -11.8   -11.8   80   926.2              -14.6       -19                  6.1            116    
-  2021-12-04 12 PST   -11.7   -10.6   -10.3   76   925.3              -14.0       -16                  6.1            341    
-  2021-12-04 13 PST   -10.7   -10.5   -10.3   76   924.4              -14.0       -16                  10.4           37     
-  2021-12-04 14 PST   -10.4   -9.8    -9.5    76   924.5              -13.4       -13                  5.0            293    
-  2021-12-04 15 PST   -10.8   -10.5   -9.8    83   924.7              -12.9       -14                  5.4            308    
-  2021-12-04 16 PST   -11.2   -11.2   -10.4   81   925.3              -13.9       -13                  3.6            242    
-  2021-12-04 17 PST   -11.7   -11.3   -11.1   83   926.2              -13.7       -16                  6.5            322    
-  2021-12-04 18 PST   -11.4   -11.2   -10.5   77   927.0              -14.4       -18                  14.8           341    
-  2021-12-04 19 PST   -12.4   -12.4   -11.2   80   927.9              -15.2       -21                  19.1           338    
-  2021-12-04 20 PST   -13.7   -13.7   -12.5   84   929.1              -15.8       -22                  18.0           334    
+Reports from CYYZ-MAN over 2023-03-14 14:06 UTC to 2023-03-14 22:06 UTC:
 
-       Station name: Edmonton International
-  Temperature range: -18 - -9.5 °C
-     Humidity range: 69 - 84 percent
-     Pressure range: 924.4 - 935.6 hPa
-     Wet bulb range: <not valid>
-     Dewpoint range: -19.9 - -12.9 °C
-    Windchill range: -25 - -13 °C
-      Humidex range: <not valid>
-Total precipitation: 0.0 mm
- Mean precipitation: 0.0 mm/hr
- Peak precipitation: 0 mm/hr
-    Peak wind speed: 19.1 km/h
+                       Station  Observation   Min   Avg   Max    Rel   Barr   Wet    Dew       Dew  Windchill   Wind   Gust     Wind 
+                          Name         Time  Temp  Temp  Temp  Humid  Press  Bulb  Point   Point Δ        Max  Speed  Speed      Dir 
+                                        UTC    °C    °C    °C      %    hPA    °C     °C        °C         °C   km/h   km/h        ° 
+ Toronto/Pearson International  230314 1500  -5.0  -4.4  -4.2     71  994.2  -8.4   -8.9       4.5        -14   36.0   49.7  335 NNW 
+ Toronto/Pearson International  230314 1600  -4.5  -3.2  -3.2     66  994.4  -8.0   -8.7       5.5        -12   34.2   45.0  327 NNW 
+ Toronto/Pearson International  230314 1700  -3.2  -2.5  -2.3     64  994.6  -7.7   -8.4       5.9        -10   33.5         337 NNW 
+ Toronto/Pearson International  230314 1800  -2.5  -1.6  -1.4     63  994.3  -7.0   -7.8       6.2        -10   36.4   47.5  332 NNW 
+ Toronto/Pearson International  230314 1900  -1.7  -1.3  -1.3     63  994.2  -6.7   -7.4       6.1        -10   35.3   47.9  336 NNW 
+ Toronto/Pearson International  230314 2000  -2.4  -2.2  -1.0     69  994.7  -6.6   -7.1       4.9        -11   33.5   51.5  339 NNW 
+ Toronto/Pearson International  230314 2100  -2.5  -2.5  -1.9     67  995.1  -7.2   -7.7       5.2        -12   40.7   57.6  328 NNW 
+ Toronto/Pearson International  230314 2200  -2.7  -2.5  -2.1     69  995.8  -6.9   -7.5       5.0        -12   47.5   64.1  321  NW 
+                                                                                                                                      
+                       Minimum               -5.0  -4.4  -4.2   63.0  994.2         -8.9       4.5      -14.0   33.5   45.0          
+                       Average               -3.1  -2.5  -2.2   66.5  994.7         -7.9       5.4      -11.4   37.1   51.9          
+                       Maximum               -1.7  -1.3  -1.0   71.0  995.8         -7.1       6.2      -10.0   47.5   64.1          
+                         Total
 
 
-> weatherdata observation CVVR-AUTO
+> weatherdata -u observation "CYYZ-MAN CYEG-MAN CYVR-MAN"
 
-Weatherdata Release 0 -- https://github.com/coridonhenshaw/weatherdata
+Weatherdata Release 1 -- https://github.com/coridonhenshaw/weatherdata
 
-Reports at 2023-02-23 21 UTC (2023-02-23 13 PST) from CVVR-AUTO:
+Reports from CYYZ-MAN CYEG-MAN CYVR-MAN at 2023-03-14 22:10 UTC:
 
-  STATION                    MIN    AVG    MAX    REL     BARR     WET    DEW     DEW POINT    HUMIDEX /   PRECIP   WIND    GUST    WIND  
-  NAME                       TEMP   TEMP   TEMP   HUMID   PRESS    BULB   POINT   DIFFERENCE   WINDCHILL   RATE     SPEED   SPEED   DIR   
-                             °C     °C     °C     %       HPA      °C     °C      °C           °C          MM/HR    KM/H    KM/H    °     
-  VANCOUVER SEA ISLAND CCG   0.2    1.2    1.9    27      1011.4   -3.6   -15.9   17.1                     0        20.5    34.7    96
+                       Station  Observation   Min   Avg   Max    Rel    Barr   Wet    Dew       Dew  Windchill   Wind   Gust     Wind 
+                          Name         Time  Temp  Temp  Temp  Humid   Press  Bulb  Point   Point Δ        Max  Speed  Speed      Dir 
+                                        UTC    °C    °C    °C      %     hPA    °C     °C        °C         °C   km/h   km/h        ° 
+ Toronto/Pearson International  230314 2200  -2.7  -2.5  -2.1     69   995.8  -6.9   -7.5       5.0        -12   47.5   64.1  321  NW 
+        Edmonton International  230314 2200  -5.2  -4.3  -4.2     63   920.6  -9.6  -10.2       5.9         -8   10.1         219  SW 
+       Vancouver International  230314 2200   8.7   9.2  10.1     56  1007.3   0.9    0.8       8.4              19.1   32.0  132  SE 
+                                                                                                                                      
+                       Minimum               -5.2  -4.3  -4.2   56.0   920.6  -9.6  -10.2       5.0      -12.0   10.1   32.0          
+                       Average                0.3   0.8   1.3   62.7   974.6  -5.2   -5.6       6.4      -10.0   25.6   48.0          
+                       Maximum                8.7   9.2  10.1   69.0  1007.3   0.9    0.8       8.4       -8.0   47.5   64.1          
+                         Total
 
 ```
 ## Output Notes
 
-Except for the perceived temperature column, all columns in the output table are passed through from the raw SWOB data without interpretation. Missing values mean that the underlying value was not provided in the station observation report. Not all stations report all values at all times.
+With some exceptions, most output columns show raw values from the SWOB system. Values not provided by the originating weather station are represented as blanks.
+
+Wet bulb temperature will be estimated (per the 2017 version of the ASHRAE Fundamentals Handbook) if no wet bulb value is provided in the station report. The appropriateness of using the ASHRAE formula to estimate outdoor wet bulb temperatures is not known. An 'E' will be shown in the web bulb column if the wet bulb temperature has been estimated.
+
+The dew point difference column contains the difference between the average air temperature and the dew point. A larger difference between temperature and dew point usually indicates more comfortable weather. 
+
+Humidex and windchill are computed internally using formulae provided by EC. Windchill is computed based on the lowest reported temperature and highest reported wind speed, even if these readings did not occur simultaneously, and may be colder than officially published figures from EC. Similarly, humidex is computed based on the highest reported temperature, and may be higher than officially published figures from EC.
 
 Wind direction is given in degrees from true north: 0/360 = north, 90 = east, 180 = south, 270 = west, etc.
 
-The perceived temperature column contains humidex (positive) or windchill (negative) temperature values computed internally by Weatherdata. These values are computed using formulae published by Environment Canada, however the windchill is computed based on worst-case conditions (lowest reported temperature and highest reported wind speed, even if these readings did not occur simultaneously) and may be colder than officially published figures from EC.
-
-The dew point difference column contains the difference between the average air temperature and the dew point. A larger difference between temperature and dew point usually indicates more comfortable weather.
+Some columns (such as humidex, windchill, and precipitation rate) are only shown when relevant data is available.
 
 ## Example Usage
 
 #### Station List Mode
 
-`weatherdata getstations %toronto%`
+`weatherdata stations %toronto%`
 
 Show all SWOB stations with names that contain the word Toronto. Uses SQL LIKE syntax, where `%` is a wildcard.
 
-`weatherdata getstations --kml stations.kml`
+`weatherdata stations --kml stations.kml`
 
-Exports the locations of known SWOB to `stations.kml` for use in Google Earth or similar tools.
+Exports the locations of known SWOB stations to `stations.kml` for use in Google Earth or similar tools.
 
-#### Single-shot Mode
+#### Observation Mode
 
 `weatherdata observation CXTO-AUTO`
 
-Acquires and presents the weather observations taken at CXTO-AUTO (Toronto downtown) for the most recent hour. Weatherdata will return an error if no observations are available.
+Acquires and presents the most recent weather observations taken at CXTO-AUTO (Toronto downtown).
 
-`weatherdata observation CXTO-AUTO --hours 2`
+`weatherdata observation CXTO-AUTO -s -2`
 
-Acquires and presents the weather observations taken at CXTO-AUTO (Toronto downtown) two hours in the past. Weatherdata will return an error if no observations are available.
+Acquires and presents the weather observations taken at CXTO-AUTO (Toronto downtown) over the past two hours.
 
-`weatherdata observation CXTO-AUTO --datetime "2021-11-26 12 EST"`
+`weatherdata observation CXTO-AUTO -s "2021-11-26 12:00 EST"`
 
-Acquires and presents the weather observations taken at CXTO-AUTO on 12 PM, 26 November 2021, Eastern Time.
+Acquires and presents the weather observations taken at CXTO-AUTO from 12 PM, 26 November 2021, Eastern Time, to the present. Timestamps must be enclosed in double quotes.
 
-The SWOB system typically retains historical weather for 30 days; Weatherdata will return an error if no observations are available at the specified date and time.
+The SWOB system typically retains historical weather for 30 days; Weatherdata will return an error if no observations are available,
+
+`weatherdata observation CVVR-AUTO --starttime "2021-11-25 00:00 PST" --endtime "2021-11-26 00:00 PST"`
+
+Acquires and presents a summary of weather observations recorded by CVVR-AUTO from midnight, 25 November 2021, Pacific Time to midnight, 26 November 2021, Pacific Time. Timestamps must be enclosed in double quotes.
+
+The SWOB system typically retains historical weather for 30 days; Weatherdata will return an error if no observations are available,
 
 `weatherdata observation "CYYZ-MAN CWTQ-AUTO CYVR-MAN CYYC-MAN"`
 
-Acquires and presents the weather observations from the major airports in Toronto, Monteal, Vancouver, and Calgary for the most recent hour.
+Acquires and presents the most recent weather observations from the major airports in Toronto, Montreal, Vancouver, and Calgary.
 
 When multiple stations are specified, the station list must be surrounded in double quotes as shown above.
-
-#### Totalizing Mode
-
-`weatherdata totalize CVVR-AUTO --hours 12`
-
-Acquires and presents a summary of weather observations recorded at CVVR-AUTO (Vancouver Sea Island) over the past 12 hours.
-
-`weatherdata totalize CVVR-AUTO --starttime "2021-11-25 00 PST"`
-
-Acquires and presents a summary of weather observations recorded by CVVR-AUTO from midnight, 25 November 2021, Pacific Time to the present time.
-
-The SWOB system typically retains historical weather for 30 days; Weatherdata gracefully fail if no observations are available during any portion of the specified date and time window.
-
-`weatherdata totalize CVVR-AUTO --starttime "2021-11-25 00 PST" --endtime "2021-11-26 00 PST"`
-
-Acquires and presents a summary of weather observations recorded by CVVR-AUTO from midnight, 25 November 2021, Pacific Time to midnight, 26 November 2021, Pacific Time.
-
-The SWOB system typically retains historical weather for 30 days; Weatherdata gracefully fail if no observations are available during any portion of the specified date and time window.
-
-`weatherdata totalize CVVR-AUTO --hours 12 --endtime "2021-11-26 00 PST"`
-
-Acquires and presents a summary of weather observations recorded by CVVR-AUTO for twelve hours up to midnight, 26 November 2021, Pacific Time.
-
-The SWOB system typically retains historical weather for 30 days; Weatherdata gracefully fail if no observations are available during any portion of the specified date and time window.
 
 ## Notes
 
 A map of Environment Canada stations (with IATA IDs) is available via [GeoMet](https://api.weather.gc.ca/collections/swob-realtime/items).
 
-Weatherdata does not currently read data provided by MSC-operated marine buoys under the https://dd.weather.gc.ca/observations/swob-ml/marine/moored-buoys/ hierarchy. In addition, Weatherdata does not currently support any of the non-EC data providers (such as the Toronto and Region Conservation Authority) which have been added to the SWOB system since 2021.
-
 Data provided by Environment Canada are subject to assorted terms of use, as [made available by Environment Canada](https://eccc-msc.github.io/open-data/msc-data/obs_station/readme_obs_insitu_en/). These terms are separate from the terms that apply to Weatherdata.
 
-## Platform Compatibility
+## Build Instructions
 
-Weatherdata is built on Linux (specifically: OpenSUSE) but should build on any platform supported by Golang where Sqlite is available.
+Weatherdata will not build out-of-the box. Third-party code is required to be downloaded to the `psychrometrics` directory. See `psychrometrics/READ-THIS.md` for instructions.
+
+Weatherdata should build and run on any platform supported by Go where Sqlite is available.
+
+## Revision History
+
+### Release 0
+
+Initial release.
+
+### Release 1
+
+Major rewrite with breaking changes to the user interface.
+
+Observation collection engine redesigned to simplify support for EC partner data providers, and to add support for finding observations nearest to a given time.
+
+Consolidated totalize and observation subcommands into one component.
+
+Observations are downloaded in parallel.
+
+Station list is now cached for 24 hours to reduce startup times.
+
+Increased Go version to 1.19 to access newer dependencies without known CVEs.
 
 ## License
 
-Copyright 2021 Coridon Henshaw
+Copyright 2021, 2023 Coridon Henshaw
 
 Permission is granted to all natural persons to execute, distribute, and/or modify this software (including its documentation) subject to the following terms:
 

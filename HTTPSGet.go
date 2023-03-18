@@ -2,14 +2,15 @@ package main
 
 import (
 	"errors"
-	"io/ioutil"
+	"io"
 	"net/http"
 	"strconv"
+	"time"
 )
 
-func HTTPSGet(URL string) (string, error) {
+func HTTPSGet(URL string, MaxAge time.Duration) (string, error) {
 
-	BodyText, err := Cache.Get(URL)
+	BodyText, err := Cache.Get(URL, MaxAge)
 	if err != nil {
 		return "", err
 	}
@@ -31,7 +32,7 @@ func HTTPSGet(URL string) (string, error) {
 		return "", errors.New(strconv.Itoa(resp.StatusCode))
 	}
 
-	body, err := ioutil.ReadAll(resp.Body)
+	body, err := io.ReadAll(resp.Body)
 	if err != nil {
 		return "", err
 	}

@@ -1,10 +1,14 @@
-sources.txt
+*.txt
 *.csv
 *.zip
 *.kml
 *.html
 *.json
+*.scrap
+*.py
+psychrometrics/psychrometrics.go
 weatherdata
+scrap
 .gitignore
 .git (copy)
 .vscode

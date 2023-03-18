@@ -3,10 +3,19 @@ package main
 import (
 	"database/sql"
 	"fmt"
+	"log"
 	"os"
 )
 
-func GetStations(Query string, KMLFile string) error {
+type StationsUIStruct struct {
+	gsQuery string
+	gsKML   string
+}
+
+func (o *StationsUIStruct) Get() error {
+
+	Query := o.gsQuery
+	KMLFile := o.gsKML
 
 	var err error
 	var Row *sql.Rows
@@ -17,14 +26,14 @@ func GetStations(Query string, KMLFile string) error {
 		SQL := `SELECT Identifier, Name, Province, Latitude, Longitude FROM StationList ORDER BY Province, Name`
 		Row, err = SQLdb.Query(SQL)
 		if err != nil {
-			return err
+			log.Panic(err)
 		}
 
 	} else {
 		SQL := `SELECT Identifier, Name, Province, Latitude, Longitude FROM StationList WHERE Name LIKE ? OR Identifier LIKE ? ORDER BY Province, Name`
 		Row, err = SQLdb.Query(SQL, Query, Query)
 		if err != nil {
-			return err
+			log.Panic(err)
 		}
 	}
 
@@ -38,8 +47,7 @@ func GetStations(Query string, KMLFile string) error {
 
 			err = Row.Scan(&Identifier, &Name, &Province, &Latitude, &Longitude)
 			if err != nil {
-				fmt.Println("4")
-				return err
+				log.Panic(err)
 			}
 
 			fmt.Printf("%-48s %2s (%6.03f, % 8.03f) - %s\n", Identifier, Province, Latitude, Longitude, Name)
@@ -55,7 +63,7 @@ func GetStations(Query string, KMLFile string) error {
 
 		f, err := os.Create(KMLFile)
 		if err != nil {
-			return err
+			log.Panic(err)
 		}
 
 		defer f.Close()
@@ -68,7 +76,7 @@ func GetStations(Query string, KMLFile string) error {
 
 			err = Row.Scan(&Identifier, &Name, &Province, &Latitude, &Longitude)
 			if err != nil {
-				return err
+				log.Panic(err)
 			}
 
 			fmt.Fprintf(f, Placemark, Identifier, Name, Longitude, Latitude)
