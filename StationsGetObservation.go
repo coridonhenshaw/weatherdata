@@ -148,6 +148,10 @@ func (o *StationsStruct) GetObservation(Station string, Timestamp time.Time, Dir
 			}
 
 			FinalURL = SC.ObservationFiles[BestTimeIndex].URL
+		} else {
+			err = fmt.Errorf("No observations found at %s : %s", SC.ProcessedURL, err)
+			Obs.err = err
+			return Obs, err
 		}
 	}
 
@@ -218,6 +222,7 @@ type ObservationFileStruct struct {
 
 type ScrapeStruct struct {
 	URL              string
+	ProcessedURL     string
 	Start            time.Time
 	End              time.Time
 	Stations         *StationsStruct
@@ -241,6 +246,7 @@ func (o *ScrapeStruct) Scrape(Day time.Time) error {
 
 	Listing, err := HTTPSGet(DirectoryURL, time.Minute*5)
 	if err != nil {
+		o.ProcessedURL = DirectoryURL
 		return err
 	}
 
@@ -253,6 +259,7 @@ func (o *ScrapeStruct) Scrape(Day time.Time) error {
 
 	Exp, err := regexp.Compile(ExpStr)
 	if err != nil {
+		o.ProcessedURL = DirectoryURL
 		return err
 	}
 
@@ -261,10 +268,12 @@ func (o *ScrapeStruct) Scrape(Day time.Time) error {
 
 		HH, err := strconv.Atoi(res[i][2][0:2])
 		if err != nil {
+			o.ProcessedURL = DirectoryURL
 			return err
 		}
 		MM, err := strconv.Atoi(res[i][2][2:])
 		if err != nil {
+			o.ProcessedURL = DirectoryURL
 			return err
 		}
 
@@ -280,6 +289,6 @@ func (o *ScrapeStruct) Scrape(Day time.Time) error {
 
 	}
 
+	o.ProcessedURL = DirectoryURL
 	return err
-
 }

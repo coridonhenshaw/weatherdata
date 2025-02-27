@@ -47,7 +47,7 @@ func (o *StationsUIStruct) Get() error {
 
 			err = Row.Scan(&Identifier, &Name, &Province, &Latitude, &Longitude)
 			if err != nil {
-				log.Panic(err)
+				fmt.Printf("%-48s Invalid: %s\n", Identifier, err)
 			}
 
 			fmt.Printf("%-48s %2s (%6.03f, % 8.03f) - %s\n", Identifier, Province, Latitude, Longitude, Name)
@@ -76,7 +76,7 @@ func (o *StationsUIStruct) Get() error {
 
 			err = Row.Scan(&Identifier, &Name, &Province, &Latitude, &Longitude)
 			if err != nil {
-				log.Panic(err)
+				fmt.Fprintf(os.Stderr, "%-48s Invalid: %s\n", Identifier, err)
 			}
 
 			fmt.Fprintf(f, Placemark, Identifier, Name, Longitude, Latitude)

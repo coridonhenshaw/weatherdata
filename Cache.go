@@ -25,7 +25,19 @@ func (c *CacheStruct) Open() {
 
 	c.sqliteDatabase, err = sql.Open("sqlite3", c.File)
 
-	SQL := `CREATE TABLE IF NOT EXISTS Cache (
+	SQL := `PRAGMA SYNCHRONOUS = NORMAL`
+	_, err = c.sqliteDatabase.Exec(SQL)
+	if err != nil {
+		log.Panic(err)
+	}
+	SQL = `PRAGMA journal_mode = WAL2`
+	_, err = c.sqliteDatabase.Exec(SQL)
+	if err != nil {
+		log.Panic(err)
+	}
+	c.sqliteDatabase.SetMaxOpenConns(4)
+
+	SQL = `CREATE TABLE IF NOT EXISTS Cache (
 		"URL" TEXT PRIMARY KEY,
 		"XML" TEXT,
 		"Timestamp" INTEGER

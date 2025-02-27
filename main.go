@@ -15,10 +15,10 @@ var UTCLoc *time.Location
 var LocalLoc *time.Location
 
 const TimeFmt string = "2006-01-02 15:04 MST"
-const BypassStationCache = false
 
-var Verbose bool
-var UTC bool
+var RefreshStationCache bool = false
+var Verbose bool = false
+var UTC bool = false
 
 func main() {
 	var err error
@@ -28,6 +28,7 @@ func main() {
 	flaggy.SetDescription("Extract and display Canadian weather observations from Environment Canada SWOB feeds.")
 
 	flaggy.Bool(&Verbose, "v", "verbose", "Enable verbose (debugging) output")
+	flaggy.Bool(&RefreshStationCache, "r", "refreshcache", "Force refresh of station cache")
 	flaggy.Bool(&UTC, "u", "utc", "Display all times in UTC")
 
 	var SUI StationsUIStruct
@@ -52,14 +53,14 @@ func main() {
 	subcommandAutotest.Description = "Harvest observations from randomly selected weather stations from every network that reports into the SWOB system. Used for testing purposes."
 	flaggy.AttachSubcommand(subcommandAutotest, 1)
 
-	fmt.Print("\nWeatherdata Release 1 -- https://github.com/coridonhenshaw/weatherdata\n\n")
+	fmt.Print("\nWeatherdata Release 2 -- https://github.com/coridonhenshaw/weatherdata\n\n")
 
 	flaggy.Parse()
 
 	Cache.Open()
 	defer Cache.Close()
 
-	Stations.Import()
+	Stations = MakeStationsStruct()
 
 	UTCLoc, err = time.LoadLocation("UTC")
 	if err != nil {

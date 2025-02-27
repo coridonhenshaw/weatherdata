@@ -145,9 +145,21 @@ Station list is now cached for 24 hours to reduce startup times.
 
 Increased Go version to 1.19 to access newer dependencies without known CVEs.
 
+### Release 2
+
+Changed SWOB download server to http://hpfx.collab.science.gc.ca from https://dd.weather.gc.ca due to the imposition of a very low rate limit on dd.weather.gc.ca. While dd.weather.gc.is officially described as intended for use by automated tools, the site now restricts access to about ten requests per minute.
+
+*Upgrading users should rebuild the station cache database by using the -r option on first run of Weatherdata 2.*
+
+Implemented support for partner observations from the Ontario Ministry of Natural Resources (partners/on-water), the Alberta Ministry of Agriculture and Irrigation (partners/ab-mai), and the Newfoundland and Labrador Department of Fisheries, Forestry and Agriculture (partners/nl-firewx).
+
+General improvements to error handling.
+
+Increased Go version to 1.23
+
 ## License
 
-Copyright 2021, 2023 Coridon Henshaw
+Copyright 2021, 2023, 2025 Coridon Henshaw
 
 Permission is granted to all natural persons to execute, distribute, and/or modify this software (including its documentation) subject to the following terms:
 

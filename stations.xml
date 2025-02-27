@@ -4,7 +4,7 @@
     <CSV URL="https://dd.weather.gc.ca/observations/doc/swob-xml_station_list.csv">
         <Columns Name="1" Province="10" Latitude="4" Longitude="5" Elevation="6" />
         <Provider Identifier="0,9"
-            URL="https://dd.weather.gc.ca/observations/swob-ml/{{ .Date }}/{{ printf &quot;%4.4s&quot; .Identifier }}/{{ .FullTimestamp }}-{{ .Identifier }}-swob.xml" />
+            URL="http://hpfx.collab.science.gc.ca/observations/swob-ml/{{ .Date }}/{{ printf &quot;%4.4s&quot; .Identifier }}/{{ .FullTimestamp }}-{{ .Identifier }}-swob.xml" />
     </CSV>
 
     <CSV URL="https://dd.weather.gc.ca/observations/doc/swob-xml_partner_station_list.csv"
@@ -13,52 +13,53 @@
 
         <Provider
             Prefix="bc-env-aq"
-            URL="https://dd.weather.gc.ca/observations/swob-ml/partners/bc-env-aq/{{ .Date }}/{{ .Identifier}}/{{ .FullTimestamp }}-bc-env-aq-{{ .Identifier }}-AUTO-swob.xml">
+            URL="http://hpfx.collab.science.gc.ca/observations/swob-ml/partners/bc-env-aq/{{ .Date }}/{{ .Identifier}}/{{ .FullTimestamp }}-bc-env-aq-{{ .Identifier }}-AUTO-swob.xml">
             <Detect Key="BC_ENV-AQ_.*" Column="10" />
         </Provider>
 
         <Provider Prefix="bc-tran"
-            URL="https://dd.weather.gc.ca/observations/swob-ml/partners/bc-tran/{{ .Date }}/{{ .Identifier}}/{{ .FullTimestamp }}-bc-tran-{{ .Identifier }}-AUTO-swob.xml">
+            URL="http://hpfx.collab.science.gc.ca/observations/swob-ml/partners/bc-tran/{{ .Date }}/{{ .Identifier}}/{{ .FullTimestamp }}-bc-tran-{{ .Identifier }}-AUTO-swob.xml">
             <Detect Key="BC_TRAN_.*" Column="10" />
         </Provider>
 
+        <!-- Detection key changed January 2024, again in Feb 2025 -->
         <Provider Prefix="bc-env-snow"
-            URL="https://dd.weather.gc.ca/observations/swob-ml/partners/bc-env-snow/{{ .Date }}/{{ .Identifier}}/{{ .FullTimestamp }}-bc-env-aq-{{ .Identifier }}-AUTO-swob.xml">
-            <Detect Key="BC_ENV-ASW_.*" Column="10" />
+            URL="http://hpfx.collab.science.gc.ca/observations/swob-ml/partners/bc-env-snow/{{ .Date }}/{{ .Identifier}}/{{ .FullTimestamp }}-bc-env-asw-{{ .Identifier }}-AUTO-swob.xml">
+            <Detect Key="BC[_-]ENV-ASW_.*" Column="10" />
         </Provider>
 
         <Provider
             Prefix="bc-forestry"
-            URL="https://dd.weather.gc.ca/observations/swob-ml/partners/bc-forestry/{{ .Date }}/{{ .Identifier }}/{{ .FullTimestamp }}-bc-wmb-{{ .Identifier }}-AUTO-swob.xml">
+            URL="http://hpfx.collab.science.gc.ca/observations/swob-ml/partners/bc-forestry/{{ .Date }}/{{ .Identifier }}/{{ .FullTimestamp }}-bc-wmb-{{ .Identifier }}-AUTO-swob.xml">
             <Detect Key="BC_WMB_.*" Column="10" />
         </Provider>
 
         <Provider Prefix="nl-water"
             TimeOffset="-30"
-            URL="https://dd.weather.gc.ca/observations/swob-ml/partners/nl-water/{{ .Date }}/{{ .FullTimestamp }}-nl-deccm-wrmd-{{ .Identifier }}-{{ .Identifier }}-AUTO-swob.xml">
+            URL="http://hpfx.collab.science.gc.ca/observations/swob-ml/partners/nl-water/{{ .Date }}/{{ .FullTimestamp }}-nl-deccm-wrmd-{{ .Identifier }}-{{ .Identifier }}-AUTO-swob.xml">
             <Detect Key="NL-DECCM-WRMD_NLENCL.*" Column="10" />
         </Provider>
 
         <Provider
             Prefix="nt-forestry" TimeOffset="5"
-            URL="https://dd.weather.gc.ca/observations/swob-ml/partners/nt-forestry/{{ .Date }}/{{ .Identifier }}/{{ .FullTimestamp }}-nwt-enr-{{ .Identifier }}-AUTO-swob.xml">
+            URL="http://hpfx.collab.science.gc.ca/observations/swob-ml/partners/nt-forestry/{{ .Date }}/{{ .Identifier }}/{{ .FullTimestamp }}-nwt-enr-{{ .Identifier }}-AUTO-swob.xml">
             <Detect Key=".*GNWT-ENR-FMD.*" Column="15" />
         </Provider>
 
         <Provider
             Prefix="nt-water" TimeOffset="4"
-            URL="https://dd.weather.gc.ca/observations/swob-ml/partners/nt-water/{{ .Date }}/{{ .Identifier }}/{{ .FullTimestamp }}-nwt-enr-{{ .Identifier }}-AUTO-swob.xml">
+            URL="http://hpfx.collab.science.gc.ca/observations/swob-ml/partners/nt-water/{{ .Date }}/{{ .Identifier }}/{{ .FullTimestamp }}-nwt-enr-{{ .Identifier }}-AUTO-swob.xml">
             <Detect Key=".*GNWT-ENR-WRD.*" Column="15" />
         </Provider>
 
         <Provider
             Prefix="sk-forestry"
-            URL="https://dd.weather.gc.ca/observations/swob-ml/partners/sk-forestry/{{ .Date }}/{{ .Identifier }}/{{ .FullTimestamp }}-sk-spsa-wmb-{{ .Identifier }}-{{ .Identifier }}-AUTO-swob.xml">
+            URL="http://hpfx.collab.science.gc.ca/observations/swob-ml/partners/sk-forestry/{{ .Date }}/{{ .Identifier }}/{{ .FullTimestamp }}-sk-spsa-wmb-{{ .Identifier }}-{{ .Identifier }}-AUTO-swob.xml">
             <Detect Key="SK-SPSA-WMB_.*" Column="10" />
         </Provider>
 
         <Provider Prefix="yt-water"
-            URL="https://dd.weather.gc.ca/observations/swob-ml/partners/yt-water/{{ .Date }}/{{ .FullTimestamp }}-yt-de-wrb-{{ .Identifier }}-{{ .Identifier }}-AUTO-swob.xml">
+            URL="http://hpfx.collab.science.gc.ca/observations/swob-ml/partners/yt-water/{{ .Date }}/{{ .FullTimestamp }}-yt-de-wrb-{{ .Identifier }}-{{ .Identifier }}-AUTO-swob.xml">
             <Detect Key="YT-DE-WRB_.*" Column="10" />
         </Provider>
 
@@ -69,71 +70,122 @@
 
         <Provider
             Prefix="dfo-ccg-lighthouse"
-            URL="https://dd.weather.gc.ca/observations/swob-ml/partners/dfo-ccg-lighthouse/{{ .Date }}/{{ SpaceToUnderscore .Identifier }}/{{ .DFOTimestamp }}_DFO-CCG_SWOB_{{ index .Column 10 }}.xml">
+            URL="http://hpfx.collab.science.gc.ca/observations/swob-ml/partners/dfo-ccg-lighthouse/{{ .Date }}/{{ SpaceToUnderscore .Identifier }}/{{ .DFOTimestamp }}_DFO-CCG_SWOB_{{ index .Column 10 }}.xml">
             <Detect Key="Government of Canada: Fisheries and Oceans Canada; Canadian Coast Guard"
                 Column="13" />
         </Provider>
 
         <Provider
             Prefix="bc-crd"
-            URL="https://dd.weather.gc.ca/observations/swob-ml/partners/bc-crd/{{ .Date }}/{{ .Identifier }}/{{ .FullTimestamp }}-bc-crd-{{ .Identifier }}-{{ .Identifier }}-AUTO-swob.xml">
+            URL="http://hpfx.collab.science.gc.ca/observations/swob-ml/partners/bc-crd/{{ .Date }}/{{ .Identifier }}/{{ .FullTimestamp }}-bc-crd-{{ .Identifier }}-{{ .Identifier }}-AUTO-swob.xml">
             <Detect Key="BC-CRD_.*" Column="10" />
         </Provider>
 
         <Provider
             Prefix="on-firewx"
-            URL="https://dd.weather.gc.ca/observations/swob-ml/partners/on-firewx/{{ .Date }}/{{ .Identifier }}/{{ .FullTimestamp }}-on-mnrf-affes-{{ .Identifier }}-{{ .Identifier }}-AUTO-swob.xml">
+            URL="http://hpfx.collab.science.gc.ca/observations/swob-ml/partners/on-firewx/{{ .Date }}/{{ .Identifier }}/{{ .FullTimestamp }}-on-mnrf-affes-{{ .Identifier }}-{{ .Identifier }}-AUTO-swob.xml">
             <Detect Key="ON-MNRF-AFFES_.*" Column="10" />
         </Provider>
 
         <Provider
             Prefix="on-mto"
-            URL="https://dd.weather.gc.ca/observations/swob-ml/partners/on-mto/{{ .Date }}/{{ .Identifier }}/{{ .FullTimestamp }}-on-mto-{{ .Identifier }}-AUTO-swob.xml">
+            URL="http://hpfx.collab.science.gc.ca/observations/swob-ml/partners/on-mto/{{ .Date }}/{{ .Identifier }}/{{ .FullTimestamp }}-on-mto-{{ .Identifier }}-AUTO-swob.xml">
             <Detect Key="ON_MTO_.*" Column="10" />
-
         </Provider>
 
         <Provider
             Prefix="on-trca"
-            URL="https://dd.weather.gc.ca/observations/swob-ml/partners/on-trca/{{ .Date }}/{{ .Identifier }}/{{ .FullTimestamp }}-on-trca-{{ .Identifier }}-{{ .Identifier }}-AUTO-swob.xml">
+            URL="http://hpfx.collab.science.gc.ca/observations/swob-ml/partners/on-trca/{{ .Date }}/{{ .Identifier }}/{{ .FullTimestamp }}-on-trca-{{ .Identifier }}-{{ .Identifier }}-AUTO-swob.xml">
             <Detect Key="TRCA_HY.*" Column="10" />
         </Provider>
 
         <Provider
             Prefix="on-grca"
-            URL="https://dd.weather.gc.ca/observations/swob-ml/partners/on-grca/{{ .Date }}/{{ .Identifier }}/{{ .FullTimestamp }}-on-grca-{{ .Identifier }}-AUTO-swob.xml">
+            URL="http://hpfx.collab.science.gc.ca/observations/swob-ml/partners/on-grca/{{ .Date }}/{{ .Identifier }}/{{ .FullTimestamp }}-on-grca-{{ .Identifier }}-AUTO-swob.xml">
             <Detect Key="ON_GRCA_.*" Column="10" />
         </Provider>
 
         <Provider
             Prefix="yt-firewx"
-            URL="https://dd.weather.gc.ca/observations/swob-ml/partners/yt-firewx/{{ .Date }}/yt-dcs-wfm_{{ .Identifier }}/{{ .FullTimestamp }}-yt-dcs-wfm-{{ .Identifier }}-{{ .Identifier }}-AUTO-swob.xml">
+            URL="http://hpfx.collab.science.gc.ca/observations/swob-ml/partners/yt-firewx/{{ .Date }}/yt-dcs-wfm_{{ .Identifier }}/{{ .FullTimestamp }}-yt-dcs-wfm-{{ .Identifier }}-{{ .Identifier }}-AUTO-swob.xml">
             <Detect Key="YT-DCS-WFM_.*" Column="10" />
         </Provider>
 
         <Provider
             Prefix="nb-firewx"
-            URL="https://dd.weather.gc.ca/observations/swob-ml/partners/nb-firewx/{{ .Date }}/{{ .Identifier }}/{{ .FullTimestamp }}-nb-dnred-{{ .Identifier }}-{{ .Identifier }}-AUTO-swob.xml">
+            URL="http://hpfx.collab.science.gc.ca/observations/swob-ml/partners/nb-firewx/{{ .Date }}/{{ .Identifier }}/{{ .FullTimestamp }}-nb-dnred-{{ .Identifier }}-{{ .Identifier }}-AUTO-swob.xml">
             <Detect Key="NB-DNRED_.*" Column="10" />
         </Provider>
 
         <Provider
             Prefix="qc-pom"
-            URL="https://dd.weather.gc.ca/observations/swob-ml/partners/qc-pom/{{ .Date }}/pom_{{ .Identifier }}/{{ .FullTimestamp }}-pom-{{ SplitWord .Identifier &quot;_&quot; &quot;_&quot; 0 1 }}-{{ SplitWord .Identifier &quot;_&quot; &quot;_&quot; 0 0 }}-AUTO-swob.xml">
+            URL="http://hpfx.collab.science.gc.ca/observations/swob-ml/partners/qc-pom/{{ .Date }}/pom_{{ .Identifier }}/{{ .FullTimestamp }}-pom-{{ SplitWord .Identifier &quot;_&quot; &quot;_&quot; 0 1 }}-{{ SplitWord .Identifier &quot;_&quot; &quot;_&quot; 0 0 }}-AUTO-swob.xml">
             <Detect Key="POM_.*" Column="10" />
         </Provider>
 
         <Provider
             Prefix="bc-RioTinto"
-            URL="https://dd.weather.gc.ca/observations/swob-ml/partners/bc-RioTinto/{{ .Date }}/{{ .Identifier }}/{{ .FullTimestamp }}-riotinto-{{ .Identifier }}-{{ .Identifier }}-AUTO-swob.xml">
+            URL="http://hpfx.collab.science.gc.ca/observations/swob-ml/partners/bc-RioTinto/{{ .Date }}/{{ .Identifier }}/{{ .FullTimestamp }}-riotinto-{{ .Identifier }}-{{ .Identifier }}-AUTO-swob.xml">
             <Detect Key="RioTinto_.*" Column="10" />
         </Provider>
 
         <Provider
             Prefix="yt-avalanche" Identifier="1"
-            URL="https://dd.weather.gc.ca/observations/swob-ml/partners/yt-avalanche/{{ .Date }}/yaa_{{ .Identifier }}/{{ .FullTimestamp }}-yaa-{{ .Identifier }}-{{ .Identifier }}-AUTO-swob.xml">
+            URL="http://hpfx.collab.science.gc.ca/observations/swob-ml/partners/yt-avalanche/{{ .Date }}/yaa_{{ .Identifier }}/{{ .FullTimestamp }}-yaa-{{ .Identifier }}-{{ .Identifier }}-AUTO-swob.xml">
             <Detect Key="YAA_YAA.*" Column="10" />
         </Provider>
+
+        <!-- Added January 2024 -->
+        <Provider
+            Prefix="ns-firewx"
+            URL="http://hpfx.collab.science.gc.ca/observations/swob-ml/partners/ns-firewx/{{ .Date }}/{{ .Identifier }}/{{ .FullTimestamp }}-ns-dlf-{{ .Identifier }}-{{ .Identifier }}-AUTO-swob.xml">
+            <Detect Key="NS-DLF_.*" Column="10" />
+        </Provider>
+
+        <!-- Added January 2024 -->
+        <Provider
+            Prefix="pc-firewx"
+            URL="http://hpfx.collab.science.gc.ca/observations/swob-ml/partners/pc-firewx/{{ .Date }}/{{ .Identifier }}/{{ .FullTimestamp }}-pc-nrmb-{{ .Identifier }}-AUTO-swob.xml">
+            <Detect Key="PC-NRMB_.*" Column="10" />
+        </Provider>
+
+        <!-- Added November 2024 -->
+        <!-- http://hpfx.collab.science.gc.ca/observations/swob-ml/partners/bc-mvrd/20241121/t004/2024-11-21-0000-bc-mvrd-t004-AUTO-swob.xml -->
+        <Provider
+                Prefix="bc-mvrd"
+                URL="http://hpfx.collab.science.gc.ca/observations/swob-ml/partners/bc-mvrd/{{ .Date }}/{{ .Identifier }}/{{ .FullTimestamp }}-bc-mvrd-{{ .Identifier }}-AUTO-swob.xml">
+                <Detect Key="BC-MVRD_.*" Column="10" />
+        </Provider>
+
+<!-- Government of Alberta: Ministry of Agriculture and Irrigation -->
+<!-- Feb 2025 -->
+<!-- http://hpfx.collab.science.gc.ca/observations/swob-ml/partners/ab_agriculture/20250225/abee/2025-02-25-0800-AB-MAI-ABEE-AUTO-swob.xml -->
+        <Provider
+                Prefix="ab-mai"
+                URL="http://hpfx.collab.science.gc.ca/observations/swob-ml/partners/ab_agriculture/{{ .Date }}/{{ .Identifier }}/{{ .FullTimestamp }}-AB-{{ index .Column 0 }}-{{ .Identifier }}-AUTO-swob.xml">
+                <Detect Key="AB-MAI_.*" Column="10" />
+        </Provider>
+
+<!-- Government of Ontario: Ministry of Natural Resources and Forestry -->
+<!-- Feb 2025 -->
+<!-- http://hpfx.collab.science.gc.ca/observations/swob-ml/partners/on_water/20250225/wsc-02ab022/2025-02-25-0000-on-mnrf-ec-wsc-02ab022-AUTO-swob.xml -->
+        <Provider
+                Prefix="on-water"
+                URL="http://hpfx.collab.science.gc.ca/observations/swob-ml/partners/on_water/{{ .Date }}/{{ .Identifier }}/{{ .FullTimestamp }}-on-mnrf-{{ .Identifier }}-AUTO-swob.xml">
+                <Detect Key="EC_WSC-.*" Column="10" />
+        </Provider>
+
+<!-- Government of Newfoundland and Labrador: Department of Fisheries; Forestry and Agriculture -->
+<!-- Feb 2025 -->
+<!-- http://hpfx.collab.science.gc.ca/observations/swob-ml/partners/nl-firewx/20250225/001/2025-02-25-0000-nl-dffa-001-AUTO-swob.xml -->
+        <Provider
+                Prefix="nl-firewx"
+                URL="http://hpfx.collab.science.gc.ca/observations/swob-ml/partners/nl-firewx/{{ .Date }}/{{ slice (index .Column 10) 8 11 }}/{{ .FullTimestamp }}-nl-dffa-{{ slice (index .Column 10) 8 11 }}-AUTO-swob.xml">
+                <Detect Key="NL-DFFA_.*" Column="10" />
+        </Provider>
+
+
+
     </CSV>
 
     <CSV URL="https://dd.weather.gc.ca/observations/doc/swob-xml_marine_station_list.csv"
@@ -141,7 +193,7 @@
         <Columns Name="2" Province="3" Latitude="5" Longitude="6" Elevation="7" Provider="13" />
 
         <Provider Identifier="9"
-            URL="https://dd.weather.gc.ca/observations/swob-ml/marine/moored-buoys/{{ .Date }}/{{ .Identifier }}/{{ .FullTimestamp }}-{{ .Identifier }}-AUTO-swob.xml">
+            URL="http://hpfx.collab.science.gc.ca/observations/swob-ml/marine/moored-buoys/{{ .Date }}/{{ .Identifier }}/{{ .FullTimestamp }}-{{ .Identifier }}-AUTO-swob.xml">
         </Provider>
     </CSV>
 

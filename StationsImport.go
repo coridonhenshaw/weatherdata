@@ -95,63 +95,38 @@ type LoadtimeTemplateStruct struct {
 }
 
 func (o *StationsStruct) Import() error {
+
 	var err error
+	var SQL string
 
-	SQLdb := Cache.GetSQLConnection()
-	o.SQLdb = SQLdb
+	Transaction := Cache.GetSQLConnection()
 
-	if !BypassStationCache {
-		SQL := `CREATE TABLE IF NOT EXISTS KeyValueStore (
-		"Key" TEXT PRIMARY KEY,
-		"Value" TEXT
-		) WITHOUT ROWID;`
-
-		_, err := SQLdb.Exec(SQL)
-		if err != nil {
-			log.Panic(err)
-		}
-
-		Now := time.Now().Unix()
-
-		SQL = `SELECT Value FROM KeyValueStore WHERE Key = ?`
-		var LastUpdated int64
-		err = o.SQLdb.QueryRow(SQL, "StationsLastUpdated").Scan(&LastUpdated)
-		if err == nil {
-			const Day = 24 * 60 * 60
-			if (Now - LastUpdated) <= (Day) {
-				if Verbose {
-					fmt.Println("Used cached stations list.")
-				}
-				return nil
-			}
-		}
-
-		SQL = "INSERT OR REPLACE INTO KeyValueStore (Key, Value) VALUES (?, ?)"
-		_, err = o.SQLdb.Exec(SQL, "StationsLastUpdated", Now)
-		if err != nil {
-			log.Panic(err)
-		}
-	}
-
-	SQL := `DROP TABLE IF EXISTS ProviderList`
-	_, err = SQLdb.Exec(SQL)
+	/* Force cache refresh if update fails */
+	SQL = "INSERT OR REPLACE INTO KeyValueStore (Key, Value) VALUES (?, ?)"
+	_, err = Transaction.Exec(SQL, "StationsLastUpdated", 0)
 	if err != nil {
 		log.Panic(err)
 	}
 
-	SQL = `CREATE TABLE IF NOT EXISTS ProviderList (
-		"Prefix" TEXT PRIMARY KEY,
-		"Quantity" INT DEFAULT 1,
-		"Name" TEXT
-		) WITHOUT ROWID;`
-
-	_, err = SQLdb.Exec(SQL)
+	SQL = `DROP TABLE IF EXISTS ProviderList`
+	_, err = Transaction.Exec(SQL)
 	if err != nil {
 		log.Panic(err)
 	}
+
+	// SQL = `CREATE TABLE IF NOT EXISTS ProviderList (
+	// 	"Prefix" TEXT PRIMARY KEY,
+	// 	"Quantity" INT DEFAULT 1,
+	// 	"Name" TEXT
+	// 	) WITHOUT ROWID;`
+
+	// _, err = Transaction.Exec(SQL)
+	// if err != nil {
+	// 	log.Panic(err)
+	// }
 
 	SQL = `DROP TABLE IF EXISTS StationList`
-	_, err = SQLdb.Exec(SQL)
+	_, err = Transaction.Exec(SQL)
 	if err != nil {
 		log.Panic(err)
 	}
@@ -167,22 +142,22 @@ func (o *StationsStruct) Import() error {
     "URL" TEXT
     ) WITHOUT ROWID;`
 
-	_, err = SQLdb.Exec(SQL)
+	_, err = Transaction.Exec(SQL)
 	if err != nil {
 		log.Panic(err)
 	}
 
 	SQL = "INSERT OR REPLACE INTO StationList (Identifier, Name, Province, Latitude, Longitude, Elevation, TimeOffset, URL) VALUES (?, ?, ?, ?, ?, ?, ?, ?)"
-	statement, err := SQLdb.Prepare(SQL)
+	StoreStatement, err := Transaction.Prepare(SQL)
 	if err != nil {
 		log.Panic(err)
 	}
 
-	SQL = "INSERT OR REPLACE INTO ProviderList (Prefix, Name) VALUES (?, ?) ON CONFLICT DO UPDATE SET Quantity=Quantity+1"
-	ProviderStatement, err := SQLdb.Prepare(SQL)
-	if err != nil {
-		log.Panic(err)
-	}
+	// SQL = "INSERT OR REPLACE INTO ProviderList (Prefix, Name) VALUES (?, ?) ON CONFLICT DO UPDATE SET Quantity=Quantity+1"
+	// o.ProviderStatement, err = Transaction.Prepare(SQL)
+	// if err != nil {
+	// 	log.Panic(err)
+	// }
 
 	var Stations StationsXMLStruct
 	err = xml.Unmarshal(EmbeddedStationsXMLBytes, &Stations)
@@ -190,175 +165,204 @@ func (o *StationsStruct) Import() error {
 		log.Panic(err)
 	}
 
-	for _, v := range Stations.CSV {
+	UnknownProviderMap := make(map[string]int)
+
+	for _, StationListEntry := range Stations.CSV {
 		if Verbose {
-			fmt.Println("Station list CSV:", v.URL)
+			fmt.Println("Station list CSV:", StationListEntry.URL)
 		}
 
-		var BasePath = v.Root
-
-		var LowerCaseIdentifiers = false
-
-		if v.IdentifierCase == "lower" {
-			LowerCaseIdentifiers = true
-		}
-
-		StationString, err := HTTPSGet(v.URL, time.Hour*12)
+		RawCSVData, err := HTTPSGet(StationListEntry.URL, time.Hour*12)
 		if err != nil {
-			fmt.Println("HTTP Error", err, "acquiring", v.URL)
+			fmt.Println("HTTP Error", err, "acquiring", StationListEntry.URL)
 			return err
 		}
 
-		reader := csv.NewReader(strings.NewReader(StationString))
-		_, err = reader.Read()
+		StoreFunc := func(FinalIdentifier string, Name string, Province string, Latitude string, Longitude string, Elevation string, TimeOffset int, URL string) error {
+			_, err := StoreStatement.Exec(FinalIdentifier, Name, Province, Latitude, Longitude, Elevation, TimeOffset, URL)
+			return err
+		}
+
+		err = o.ParseCSV(StationListEntry, strings.NewReader(RawCSVData), StoreFunc, UnknownProviderMap)
 		if err != nil {
 			log.Panic(err)
 		}
 
-		UnknownProviderMap := make(map[string]int)
+	}
 
-		var LineCount int
-		for {
-			line, err := reader.Read()
-			if err == io.EOF {
+	var Flag bool
+	for k, b := range UnknownProviderMap {
+		fmt.Println("Unknown data provider:", b, k)
+		Flag = true
+	}
+	if Flag {
+		fmt.Println()
+	}
+
+	SQL = "INSERT OR REPLACE INTO KeyValueStore (Key, Value) VALUES (?, ?)"
+	_, err = Transaction.Exec(SQL, "StationsLastUpdated", time.Now().Unix())
+	if err != nil {
+		log.Panic(err)
+	}
+
+	//	Transaction.Commit()
+
+	return nil
+}
+
+func (o *StationsStruct) ParseCSV(v StationsXMLCSVStruct,
+	RawCSVData io.Reader,
+	Store func(FinalIdentifier string, Name string, Province string, Latitude string, Longitude string, Elevation string, TimeOffset int, URL string) error,
+	UnknownProviderMap map[string]int) error {
+
+	var err error
+
+	CSVReader := csv.NewReader(RawCSVData)
+	_, err = CSVReader.Read()
+	if err != nil {
+		log.Panic(err)
+	}
+
+	var BasePath = v.Root
+
+	var LowerCaseIdentifiers = false
+	if v.IdentifierCase == "lower" {
+		LowerCaseIdentifiers = true
+	}
+
+	var LineCount int
+	for {
+		line, err := CSVReader.Read()
+		if err == io.EOF {
+			break
+		} else if err != nil {
+			return err
+		}
+
+		var p StationsXMLProviderStruct
+		var Matched bool
+		for _, Provider := range v.Provider {
+			p = Provider
+			if len(Provider.Detect.Key) == 0 && Provider.Detect.Column == 0 {
+				Matched = true
 				break
-			} else if err != nil {
-				return err
 			}
 
-			var p StationsXMLProviderStruct
-			var Matched bool
-			for _, Provider := range v.Provider {
-				p = Provider
-				if len(Provider.Detect.Key) == 0 && Provider.Detect.Column == 0 {
-					Matched = true
-					break
-				}
+			Match, err := regexp.MatchString(Provider.Detect.Key, line[Provider.Detect.Column])
+			if err != nil {
+				log.Panic(err)
+			}
 
-				Match, err := regexp.MatchString(Provider.Detect.Key, line[Provider.Detect.Column])
+			if Match {
+				Matched = true
+				break
+			}
+		}
+
+		if !Matched {
+			_, o := UnknownProviderMap[line[v.Columns.Provider]]
+			if !o {
+				UnknownProviderMap[line[v.Columns.Provider]] = 0
+			}
+			UnknownProviderMap[line[v.Columns.Provider]]++
+
+			continue
+		}
+
+		if len(p.Ignore) > 0 {
+			continue
+		}
+
+		var Identifier string
+
+		if len(p.Identifier) > 0 {
+			CompositeIdentifier := strings.Split(p.Identifier, ",")
+			for _, k := range CompositeIdentifier {
+				i, err := strconv.Atoi(k)
+				Identifier += line[i] + "-"
 				if err != nil {
 					log.Panic(err)
 				}
-
-				if Match {
-					Matched = true
-					break
-				}
 			}
-
-			if !Matched {
-				_, o := UnknownProviderMap[line[v.Columns.Provider]]
-				if !o {
-					UnknownProviderMap[line[v.Columns.Provider]] = 0
-				}
-				UnknownProviderMap[line[v.Columns.Provider]]++
-
-				continue
-			}
-
-			if len(p.Ignore) > 0 {
-				continue
-			}
-
-			var Identifier string
-
-			if len(p.Identifier) > 0 {
-				CompositeIdentifier := strings.Split(p.Identifier, ",")
-				for _, k := range CompositeIdentifier {
-					i, err := strconv.Atoi(k)
-					Identifier += line[i] + "-"
-					if err != nil {
-						log.Panic(err)
-					}
-				}
-				Identifier = Identifier[:len(Identifier)-1]
-			} else {
-				Identifier = line[0]
-			}
-
-			if LowerCaseIdentifiers {
-				Identifier = strings.ToLower(Identifier)
-			}
-			Identifier = strings.ReplaceAll(Identifier, " ", "_")
-
-			Name := line[v.Columns.Name]
-			Province := ProvinceMap[line[v.Columns.Province]]
-			Latitude := line[v.Columns.Latitude]
-			Longitude := line[v.Columns.Longitude]
-			Elevation := line[v.Columns.Elevation]
-			TimeOffset := p.TimeOffset
-
-			TemplateName := fmt.Sprintf("T:%v", LineCount)
-
-			ut, err := template.New(TemplateName).Funcs(template.FuncMap{
-				"SpaceToUnderscore": func(Input string) string {
-					return strings.ReplaceAll(Input, " ", "_")
-				},
-				"SplitWord": func(Input string, SepIn string, SepOut string, Begin int, End int) string {
-					Words := strings.Split(Input, SepIn)
-
-					if End == 0 {
-						End = len(Words)
-					}
-
-					return strings.Join(Words[Begin:End], SepOut)
-				},
-			}).Parse(p.URL)
-			if err != nil {
-				fmt.Print("Error in template:\n\n")
-				fmt.Println(p.URL)
-				fmt.Println()
-				log.Panic(err)
-			}
-
-			var u LoadtimeTemplateStruct
-			u.Date = "{{ .Date }}"
-			u.FullTimestamp = "{{ .FullTimestamp }}"
-			u.DFOTimestamp = "{{ .DFOTimestamp }}"
-			u.Identifier = Identifier
-			u.Column = line
-
-			var tpl bytes.Buffer
-			err = ut.Execute(&tpl, u)
-
-			if err != nil {
-				log.Panic(err)
-			}
-
-			URL := tpl.String()
-
-			var FinalIdentifier string
-			if len(BasePath) > 0 {
-				FinalIdentifier = BasePath + "/"
-			}
-			if len(p.Prefix) > 0 {
-				FinalIdentifier += p.Prefix + "/"
-			}
-
-			_, err = ProviderStatement.Exec(FinalIdentifier, "ni")
-			if err != nil {
-				log.Panic(err)
-			}
-
-			FinalIdentifier += Identifier
-
-			//fmt.Printf("%-9s %2s %-25s %s\n", FinalIdentifier, Province, Name, URL)
-
-			_, err = statement.Exec(FinalIdentifier, Name, Province, Latitude, Longitude, Elevation, TimeOffset, URL)
-			if err != nil {
-				log.Panic(err)
-			}
-
+			Identifier = Identifier[:len(Identifier)-1]
+		} else {
+			Identifier = line[0]
 		}
-		var Flag bool
-		for k, b := range UnknownProviderMap {
-			fmt.Println("Unknown data provider:", b, k)
-			Flag = true
+
+		if LowerCaseIdentifiers {
+			Identifier = strings.ToLower(Identifier)
 		}
-		if Flag {
+		Identifier = strings.ReplaceAll(Identifier, " ", "_")
+
+		Name := line[v.Columns.Name]
+		Province := ProvinceMap[line[v.Columns.Province]]
+		Latitude := line[v.Columns.Latitude]
+		Longitude := line[v.Columns.Longitude]
+		Elevation := line[v.Columns.Elevation]
+		TimeOffset := p.TimeOffset
+
+		TemplateName := fmt.Sprintf("T:%v", LineCount)
+
+		ut, err := template.New(TemplateName).Funcs(template.FuncMap{
+			"SpaceToUnderscore": func(Input string) string {
+				return strings.ReplaceAll(Input, " ", "_")
+			},
+			"SplitWord": func(Input string, SepIn string, SepOut string, Begin int, End int) string {
+				Words := strings.Split(Input, SepIn)
+
+				if End == 0 {
+					End = len(Words)
+				}
+
+				return strings.Join(Words[Begin:End], SepOut)
+			},
+		}).Parse(p.URL)
+		if err != nil {
+			fmt.Print("Error in template:\n\n")
+			fmt.Println(p.URL)
 			fmt.Println()
+			log.Panic(err)
 		}
+
+		var u LoadtimeTemplateStruct
+		u.Date = "{{ .Date }}"
+		u.FullTimestamp = "{{ .FullTimestamp }}"
+		u.DFOTimestamp = "{{ .DFOTimestamp }}"
+		u.Identifier = Identifier
+		u.Column = line
+
+		var tpl bytes.Buffer
+		err = ut.Execute(&tpl, u)
+
+		if err != nil {
+			log.Panic(err)
+		}
+
+		URL := tpl.String()
+
+		var FinalIdentifier string
+		if len(BasePath) > 0 {
+			FinalIdentifier = BasePath + "/"
+		}
+		if len(p.Prefix) > 0 {
+			FinalIdentifier += p.Prefix + "/"
+		}
+
+		// _, err = o.ProviderStatement.Exec(FinalIdentifier, "ni")
+		// if err != nil {
+		// 	log.Panic(err)
+		// }
+
+		FinalIdentifier += Identifier
+
+		//fmt.Printf("%-9s %2s %-25s %s\n", FinalIdentifier, Province, Name, URL)
+
+		err = Store(FinalIdentifier, Name, Province, Latitude, Longitude, Elevation, TimeOffset, URL)
+		if err != nil {
+			log.Panic(err)
+		}
+
 	}
 
-	return nil
+	return err
 }

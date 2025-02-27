@@ -107,7 +107,7 @@ func (o *ObservationUIStruct) Get() error {
 
 	var wg sync.WaitGroup
 
-	for i := 0; i < 8; i++ {
+	for i := 0; i < 4; i++ {
 		wg.Add(1)
 
 		go func() {
