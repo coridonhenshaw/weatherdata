@@ -149,7 +149,7 @@ func (o *StationsStruct) GetObservation(Station string, Timestamp time.Time, Dir
 
 			FinalURL = SC.ObservationFiles[BestTimeIndex].URL
 		} else {
-			err = fmt.Errorf("No observations found at %s : %s", SC.ProcessedURL, err)
+			err = fmt.Errorf("No observations found at %s : %+v", SC.ProcessedURL, SC.Errors)
 			Obs.err = err
 			return Obs, err
 		}
@@ -201,11 +201,12 @@ func (o *StationsStruct) Datespan(Center time.Time, NegativeRange time.Duration,
 	End = End.Truncate(time.Hour * 24)
 	var Step = time.Hour * 24
 	var Day = Start
+
 	for {
 		//fmt.Println(Day.Format("2006-01-02 15:04:05"))
 		err := SC.Scrape(Day)
 		if err != nil {
-			return &SC, err
+			SC.Errors = append(SC.Errors, err)
 		}
 		Day = Day.Add(Step)
 		if Day.After(End) {
@@ -227,6 +228,7 @@ type ScrapeStruct struct {
 	End              time.Time
 	Stations         *StationsStruct
 	ObservationFiles []ObservationFileStruct
+	Errors           []error
 }
 
 func (o *ScrapeStruct) Scrape(Day time.Time) error {
